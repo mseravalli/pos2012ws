@@ -4,7 +4,7 @@
 #                                                                  #
 ####################################################################
 
-CC = icc
+CC = gcc
 CFLAGS = -std=c99 -g -O0 
 LIBS = -lm
 
@@ -12,16 +12,19 @@ LIBS = -lm
 CFLAGS += $(PAPI_INC)
 LIBS += $(PAPI_LIB)
 
-SRCS = xread.c xwrite.c gccg.c vol2mesh.c
-OBJS =  $(addsuffix .o, $(basename $(SRCS)))
+SRCS_GCCG = xread.c xwrite.c gccg.c vol2mesh.c
+OBJS_GCCG =  $(addsuffix .o, $(basename $(SRCS_GCCG)))
 
-all: gccg 
+SRCS_BC = binconv.c 
+OBJS_BC =  $(addsuffix .o, $(basename $(SRCS_BC)))
 
-%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+all: gccg binconv 
 
-gccg: $(OBJS) 
+gccg: $(OBJS_GCCG) 
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+
+binconv: $(OBJS_BC) 
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 clean:
-	rm -rf *.o gccg 
+	rm -rf *.o gccg binconv
