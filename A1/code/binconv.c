@@ -17,10 +17,10 @@ int main ( int argc, char** argv ) {
     FILE* in_file = fopen( in_path, "r" ); 
     FILE* out_file = fopen( out_path, "w" );
     
-	if ( in_file == NULL ) {
-		printf( "Error opening file: %s\n", in_path );
-		exit( 1 );
-	}
+    if ( in_file == NULL ) {
+        printf( "Error opening file: %s\n", in_path );
+        exit( 1 );
+    }
 
     // read dimensions
 
@@ -37,30 +37,44 @@ int main ( int argc, char** argv ) {
     int i;
 
     int temp_int;
-	for ( i = nintci; i <= nintcf; i++ ) {
-		fscanf( in_file, "%d", &temp_int );
-		fscanf( in_file, "%d", &temp_int );
-		fscanf( in_file, "%d", &temp_int );
-		fscanf( in_file, "%d", &temp_int );
-		fscanf( in_file, "%d", &temp_int );
-		fscanf( in_file, "%d", &temp_int );
-	}
+    for ( i = nintci; i <= nintcf; i++ ) {
+        fscanf( in_file, "%d", &temp_int );
+        fprintf( out_file, "%x ", temp_int );
+        fscanf( in_file, "%d", &temp_int );
+        fprintf( out_file, "%x ", temp_int );
+        fscanf( in_file, "%d", &temp_int );
+        fprintf( out_file, "%x ", temp_int );
+        fscanf( in_file, "%d", &temp_int );
+        fprintf( out_file, "%x ", temp_int );
+        fscanf( in_file, "%d", &temp_int );
+        fprintf( out_file, "%x ", temp_int );
+        fscanf( in_file, "%d", &temp_int );
+        fprintf( out_file, "%x ", temp_int );
+    }
 
     double temp_double;
-	for (i = nintci; i <= nintcf; i++)
-	{
-		fscanf(in_file, "%lf", &temp_double);
-		fscanf(in_file, "%lf", &temp_double);
-		fscanf(in_file, "%lf", &temp_double);
-		fscanf(in_file, "%lf", &temp_double);
-		fscanf(in_file, "%lf", &temp_double);
-		fscanf(in_file, "%lf", &temp_double);
-		fscanf(in_file, "%lf", &temp_double);
-		fscanf(in_file, "%lf", &temp_double);
-	}
+    for ( i = nintci; i <= nintcf; i++ ) {
+        fscanf( in_file, "%lf", &temp_double );
+        fprintf( out_file, "%lf ", temp_double );
+        fscanf( in_file, "%lf", &temp_double );
+        fprintf( out_file, "%lf ", temp_double );
+        fscanf( in_file, "%lf", &temp_double );
+        fprintf( out_file, "%lf ", temp_double );
+        fscanf( in_file, "%lf", &temp_double );
+        fprintf( out_file, "%lf ", temp_double );
+        fscanf( in_file, "%lf", &temp_double );
+        fprintf( out_file, "%lf ", temp_double );
+        fscanf( in_file, "%lf", &temp_double );
+        fprintf( out_file, "%lf ", temp_double );
+        fscanf( in_file, "%lf", &temp_double );
+        fprintf( out_file, "%lf ", temp_double );
+        fscanf( in_file, "%lf", &temp_double );
+        fprintf( out_file, "%lf ", temp_double );
+    }
 
-	for (i = nintci; i <= nintcf; i++) {
-		fscanf(in_file, "%d", &temp_int);
+    for ( i = nintci; i <= nintcf; i++ ) {
+        fscanf( in_file, "%d", &temp_int );
+        fprintf( out_file, "%x ", temp_int );
     }
 
 //  while ( !feof(in_file) ) {
