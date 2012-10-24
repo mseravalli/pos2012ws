@@ -30,51 +30,55 @@ int main ( int argc, char** argv ) {
     int nextcf; 
 
     fscanf( in_file, "%d", &nintci );
+    fwrite( &nintci, sizeof( int ), 1, out_file );
     fscanf( in_file, "%d", &nintcf );
+    fwrite( &nintcf, sizeof( int ), 1, out_file );
     fscanf( in_file, "%d", &nextci );
+    fwrite( &nextci, sizeof( int ), 1, out_file );
     fscanf( in_file, "%d", &nextcf );
+    fwrite( &nextcf, sizeof( int ), 1, out_file );
 
     int i;
 
     int temp_int;
     for ( i = nintci; i <= nintcf; i++ ) {
         fscanf( in_file, "%d", &temp_int );
-        fprintf( out_file, "%x ", temp_int );
+        fwrite( &temp_int, sizeof( int ), 1, out_file );
         fscanf( in_file, "%d", &temp_int );
-        fprintf( out_file, "%x ", temp_int );
+        fwrite( &temp_int, sizeof( int ), 1, out_file );
         fscanf( in_file, "%d", &temp_int );
-        fprintf( out_file, "%x ", temp_int );
+        fwrite( &temp_int, sizeof( int ), 1, out_file );
         fscanf( in_file, "%d", &temp_int );
-        fprintf( out_file, "%x ", temp_int );
+        fwrite( &temp_int, sizeof( int ), 1, out_file );
         fscanf( in_file, "%d", &temp_int );
-        fprintf( out_file, "%x ", temp_int );
+        fwrite( &temp_int, sizeof( int ), 1, out_file );
         fscanf( in_file, "%d", &temp_int );
-        fprintf( out_file, "%x ", temp_int );
+        fwrite( &temp_int, sizeof( int ), 1, out_file );
     }
 
     double temp_double;
     for ( i = nintci; i <= nintcf; i++ ) {
         fscanf( in_file, "%lf", &temp_double );
-        fprintf( out_file, "%lf ", temp_double );
+        fwrite( &temp_int, sizeof( double ), 1, out_file );
         fscanf( in_file, "%lf", &temp_double );
-        fprintf( out_file, "%lf ", temp_double );
+        fwrite( &temp_int, sizeof( double ), 1, out_file );
         fscanf( in_file, "%lf", &temp_double );
-        fprintf( out_file, "%lf ", temp_double );
+        fwrite( &temp_int, sizeof( double ), 1, out_file );
         fscanf( in_file, "%lf", &temp_double );
-        fprintf( out_file, "%lf ", temp_double );
+        fwrite( &temp_int, sizeof( double ), 1, out_file );
         fscanf( in_file, "%lf", &temp_double );
-        fprintf( out_file, "%lf ", temp_double );
+        fwrite( &temp_int, sizeof( double ), 1, out_file );
         fscanf( in_file, "%lf", &temp_double );
-        fprintf( out_file, "%lf ", temp_double );
+        fwrite( &temp_int, sizeof( double ), 1, out_file );
         fscanf( in_file, "%lf", &temp_double );
-        fprintf( out_file, "%lf ", temp_double );
+        fwrite( &temp_int, sizeof( double ), 1, out_file );
         fscanf( in_file, "%lf", &temp_double );
-        fprintf( out_file, "%lf ", temp_double );
+        fwrite( &temp_int, sizeof( double ), 1, out_file );
     }
 
     for ( i = nintci; i <= nintcf; i++ ) {
         fscanf( in_file, "%d", &temp_int );
-        fprintf( out_file, "%x ", temp_int );
+        fwrite( &temp_int, sizeof( int ), 1, out_file );
     }
 
 //  while ( !feof(in_file) ) {

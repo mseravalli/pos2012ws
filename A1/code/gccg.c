@@ -35,7 +35,7 @@ int main( int argc, char *argv[] ) {
 
     // gc initialization 
     // read-in the input file
-    int f_status = read_formatted( file_in, 
+    int f_status = read_binary( file_in, 
                                    &nintci, 
                                    &nintcf, 
                                    &nextci, 
