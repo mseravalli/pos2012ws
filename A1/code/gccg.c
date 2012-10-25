@@ -28,6 +28,7 @@ int main( int argc, char *argv[] ) {
 
     char *file_in = argv[2];
     char *file_out = argv[3];
+    strcat( file_out, ".vtk" );
 
     int status = 0;
 
