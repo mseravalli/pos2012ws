@@ -6,16 +6,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int read_long_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
-        int *NEXTCF, int *NBCESI, int *NBCESF, int *NBCEWI, int *NBCEWF,
-        int *NBCELI, int *NBCELF, int *NSDIR, int *NEDIR, int *NI, int *NJ,
-        int *NK, int *NDIR1, int *NDIR2, int *NDIR3, int *NBS, int *NBW,
-        int *NBL, int *NBN, int *NBE, int *NBH, int *IDIM, int *INCR,
-        int ***LCC, int **LBS, int **LBN, int **LBW, int **LBE, int **LBL,
-        int **LBH, int **NTRAEW, int **NTRANS, int **NTRAHL, int **NBOARD,
-        double **BS, double **BE, double **BN, double **BW, double **BL,
-        double **BH, double **BP, double **SU )
-{
+int read_long_formatted( char *fileName, 
+                         int *NINTCI, 
+                         int *NINTCF, 
+                         int *NEXTCI,
+                         int *NEXTCF, 
+                         int *NBCESI, 
+                         int *NBCESF, 
+                         int *NBCEWI, 
+                         int *NBCEWF,
+                         int *NBCELI, 
+                         int *NBCELF, 
+                         int *NSDIR, 
+                         int *NEDIR, 
+                         int *NI, 
+                         int *NJ,
+                         int *NK, 
+                         int *NDIR1, 
+                         int *NDIR2, 
+                         int *NDIR3, 
+                         int *NBS, 
+                         int *NBW,
+                         int *NBL, 
+                         int *NBN, 
+                         int *NBE, 
+                         int *NBH, 
+                         int *IDIM, 
+                         int *INCR,
+                         int ***LCC, 
+                         int **LBS, 
+                         int **LBN, 
+                         int **LBW, 
+                         int **LBE, 
+                         int **LBL,
+                         int **LBH, 
+                         int **NTRAEW, 
+                         int **NTRANS, 
+                         int **NTRAHL, 
+                         int **NBOARD,
+                         double **BS, 
+                         double **BE, 
+                         double **BN, 
+                         double **BW, 
+                         double **BL,
+                         double **BH, 
+                         double **BP, 
+                         double **SU ) {
     int i;
     FILE *fp = fopen( fileName, "r" );
     if ( fp == NULL ) {
@@ -58,7 +94,9 @@ int read_long_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     }
 
     for ( i = 0; i < 6; i++ ) {
-        if ( ( ( *LCC )[i] = ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == NULL ) {
+        if ( ( ( *LCC )[i] =
+                ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) 
+                == NULL ) {
             printf( "malloc( LCC ) failed\n" );
             return -1;
         }
@@ -76,7 +114,13 @@ int read_long_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     }
 #ifdef DEBUG
 
-    printf( "NBS = %d, NBW = %d, NBL = %d, NBN = %d, NBE = %d, NBH = %d\n", *NBS, *NBW, *NBL, *NBN, *NBE, *NBH );
+    printf( "NBS = %d, NBW = %d, NBL = %d, NBN = %d, NBE = %d, NBH = %d\n", 
+            *NBS, 
+            *NBW, 
+            *NBL, 
+            *NBN, 
+            *NBE, 
+            *NBH );
 
 #endif
 
@@ -144,17 +188,20 @@ int read_long_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     }
 #endif
     //
-    if ( ( *NTRAEW = ( int * ) malloc( ( *NBW + 1 ) * sizeof( int ) ) ) == NULL ) {
+    if ( ( *NTRAEW = ( int * ) malloc( ( *NBW + 1 ) * sizeof( int ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
 
-    if ( ( *NTRANS = ( int * ) malloc( ( *NBS + 1 ) * sizeof( int ) ) ) == NULL ) {
+    if ( ( *NTRANS = ( int * ) malloc( ( *NBS + 1 ) * sizeof( int ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
 
-    if ( ( *NTRAHL = ( int * ) malloc( ( *NBL + 1 ) * sizeof( int ) ) ) == NULL ) {
+    if ( ( *NTRAHL = ( int * ) malloc( ( *NBL + 1 ) * sizeof( int ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
@@ -195,42 +242,50 @@ int read_long_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     printf( "\n" );
 #endif
 
-    if ( ( *BS = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BS = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) ==
+             NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
 
-    if ( ( *BE = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BE = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
 
-    if ( ( *BN = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BN = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
 
-    if ( ( *BW = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BW = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
 
-    if ( ( *BL = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BL = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
 
-    if ( ( *BH = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BH = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
 
-    if ( ( *BP = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BP = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
 
-    if ( ( *SU = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *SU = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
@@ -248,11 +303,20 @@ int read_long_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
 
 #ifdef DEBUG
     for( i = ( *NINTCI ); i <= *NINTCF; i++ ) {
-        printf( "%e %e %e %e %e %e %e %e\n", ( *BS )[i], ( *BE )[i], ( *BN )[i], ( *BW )[i], ( *BL )[i], ( *BH )[i], ( *BP )[i], ( *SU )[i] );
+        printf( "%e %e %e %e %e %e %e %e\n", 
+                ( *BS )[i], 
+                ( *BE )[i], 
+                ( *BN )[i], 
+                ( *BW )[i], 
+                ( *BL )[i], 
+                ( *BH )[i], 
+                ( *BP )[i], 
+                ( *SU )[i] );
     }
 #endif
 
-    if ( ( *NBOARD = ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == NULL ) {
+    if ( ( *NBOARD = ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
@@ -273,11 +337,21 @@ int read_long_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     return 0;
 }
 
-int read_binary( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
-        int *NEXTCF, int ***LCC, double **BS, double **BE, double **BN,
-        double **BW, double **BL, double **BH, double **BP, double **SU,
-        int **NBOARD )
-{
+int read_binary( char *fileName, 
+                 int *NINTCI, 
+                 int *NINTCF, 
+                 int *NEXTCI,
+                 int *NEXTCF, 
+                 int ***LCC, 
+                 double **BS, 
+                 double **BE, 
+                 double **BN,
+                 double **BW, 
+                 double **BL, 
+                 double **BH, 
+                 double **BP, 
+                 double **SU,
+                 int **NBOARD ) {
     int i;
     FILE *fp = fopen( fileName, "r" );
     if ( fp == NULL ) {
@@ -296,7 +370,9 @@ int read_binary( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
         return -1;
     }
     for ( i = 0; i < 6; i++ ) {
-        if ( ( ( *LCC )[i] = ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == NULL ) {
+        if ( ( ( *LCC )[i] = 
+                ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == 
+                NULL ) {
             printf( "malloc( LCC ) failed\n" );
             return -1;
         }
@@ -313,35 +389,43 @@ int read_binary( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     }
 
     // allocate other arrays
-    if ( ( *BS = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BS = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) ==
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BE = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BE = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BN = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BN = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BW = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BW = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BL = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BL = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BH = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BH = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BP = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BP = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *SU = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *SU = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
@@ -359,7 +443,8 @@ int read_binary( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     }
 
     // read board
-    if ( ( *NBOARD = ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == NULL ) {
+    if ( ( *NBOARD = ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
@@ -372,11 +457,21 @@ int read_binary( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     return 0;
 }
 
-int read_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
-        int *NEXTCF, int ***LCC, double **BS, double **BE, double **BN,
-        double **BW, double **BL, double **BH, double **BP, double **SU,
-        int **NBOARD )
-{
+int read_formatted( char *fileName, 
+                    int *NINTCI, 
+                    int *NINTCF, 
+                    int *NEXTCI,
+                    int *NEXTCF, 
+                    int ***LCC, 
+                    double **BS, 
+                    double **BE, 
+                    double **BN,
+                    double **BW, 
+                    double **BL, 
+                    double **BH, 
+                    double **BP, 
+                    double **SU,
+                    int **NBOARD ) {
     int i;
     FILE *fp = fopen( fileName, "r" );
     if ( fp == NULL ) {
@@ -395,7 +490,9 @@ int read_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
         return -1;
     }
     for ( i = 0; i < 6; i++ ) {
-        if ( ( ( *LCC )[i] = ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == NULL ) {
+        if ( ( ( *LCC )[i] = 
+                ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == 
+                NULL ) {
             printf( "malloc( LCC ) failed\n" );
             return -1;
         }
@@ -412,35 +509,43 @@ int read_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     }
 
     // allocate other arrays
-    if ( ( *BS = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BS = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) ==
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BE = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BE = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BN = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BN = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BW = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BW = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BL = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BL = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BH = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BH = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *BP = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *BP = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
-    if ( ( *SU = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == NULL ) {
+    if ( ( *SU = ( double * ) malloc( ( *NEXTCF + 1 ) * sizeof( double ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
@@ -458,7 +563,8 @@ int read_formatted( char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
     }
 
     // read board
-    if ( ( *NBOARD = ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == NULL ) {
+    if ( ( *NBOARD = ( int * ) malloc( ( *NINTCF + 1 ) * sizeof( int ) ) ) == 
+            NULL ) {
         printf( "malloc( ) failed\n" );
         return -1;
     }
