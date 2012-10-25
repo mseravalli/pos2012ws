@@ -10,13 +10,24 @@
  *
  */
 int main( int argc, char *argv[] ) {
-    if ( argc < 3 )    {
-        printf("Usage: %s input_file output_file\n", argv[0] );
+    if ( argc < 4 )    {
+        printf("Usage: %s format input_file output_file\n", argv[0] );
         return EXIT_FAILURE;
     }
 
-    char *file_in = argv[1];
-    char *file_out = argv[2];
+    enum FORMAT_T file_format;
+
+    if ( strcmp( argv[1], "bin" ) == 0 ) {
+        file_format = FORMAT_BINARY; 
+    } else if ( strcmp( argv[1], "text" ) == 0 ) {
+        file_format = FORMAT_TEXT; 
+    } else {
+        printf("Format '%s' not valid please use 'bin' or 'text'\n", argv[1] );
+        return EXIT_FAILURE;
+    }
+
+    char *file_in = argv[2];
+    char *file_out = argv[3];
 
     int status = 0;
 
@@ -35,7 +46,26 @@ int main( int argc, char *argv[] ) {
 
     // gc initialization 
     // read-in the input file
-    int f_status = read_formatted( file_in, 
+    int f_status = -1;
+    if ( file_format == FORMAT_BINARY ) {
+       f_status = read_binary( file_in, 
+                               &nintci, 
+                               &nintcf, 
+                               &nextci, 
+                               &nextcf, 
+                               &lcc,
+                               &bs, 
+                               &be, 
+                               &bn, 
+                               &bw, 
+                               &bl, 
+                               &bh, 
+                               &bp, 
+                               &su, 
+                               &nboard );
+    }
+    if ( file_format == FORMAT_TEXT ) {
+        f_status = read_formatted( file_in, 
                                    &nintci, 
                                    &nintcf, 
                                    &nextci, 
@@ -50,6 +80,7 @@ int main( int argc, char *argv[] ) {
                                    &bp, 
                                    &su, 
                                    &nboard );
+    }
 
     if ( f_status != 0 ) {
         printf( "failed to initialize data!\n" );

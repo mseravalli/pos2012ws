@@ -1,6 +1,11 @@
 #ifndef XREAD_H_
 #define XREAD_H_
 
+enum FORMAT_T {
+    FORMAT_BINARY,
+    FORMAT_TEXT
+};
+
 int read_long_formatted( char *fileName,
                          int *NINTCI, 
                          int *NINTCF, 
