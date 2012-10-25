@@ -9,12 +9,12 @@ int write_result( char *inFileName,
                   int ITER, 
                   double RATIO );
 
-int write_result_vtk( char *outFileName, 
+int write_result_vtk( char* outFileName, 
                       int startIdx, 
                       int endIdx, 
                       int nodeCnt, 
-                      int **points, 
-                      int **elems, 
-                      double *vector ); 
+                      int** points, 
+                      int** elems, 
+                      double* vector ); 
 
 #endif /* XWRITE_H_ */

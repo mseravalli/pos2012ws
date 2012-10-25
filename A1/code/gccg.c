@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "vol2mesh.h"
 #include "xread.h"
 #include "xwrite.h"
 
@@ -28,7 +29,6 @@ int main( int argc, char *argv[] ) {
 
     char *file_in = argv[2];
     char *file_out = argv[3];
-    strcat( file_out, ".vtk" );
 
     int status = 0;
 
@@ -49,21 +49,21 @@ int main( int argc, char *argv[] ) {
     // read-in the input file
     int f_status = -1;
     if ( file_format == FORMAT_BINARY ) {
-       f_status = read_binary( file_in, 
-                               &nintci, 
-                               &nintcf, 
-                               &nextci, 
-                               &nextcf, 
-                               &lcc,
-                               &bs, 
-                               &be, 
-                               &bn, 
-                               &bw, 
-                               &bl, 
-                               &bh, 
-                               &bp, 
-                               &su, 
-                               &nboard );
+        f_status = read_binary( file_in, 
+                                &nintci, 
+                                &nintcf, 
+                                &nextci, 
+                                &nextcf, 
+                                &lcc,
+                                &bs, 
+                                &be, 
+                                &bn, 
+                                &bw, 
+                                &bl, 
+                                &bh, 
+                                &bp, 
+                                &su, 
+                                &nboard );
     }
     if ( file_format == FORMAT_TEXT ) {
         f_status = read_formatted( file_in, 
@@ -273,7 +273,30 @@ int main( int argc, char *argv[] ) {
                        var, 
                        iter, 
                        ratio ) != 0 ) {
-        printf("error when trying to write to file %s\n", file_out );
+        printf( "error when trying to write to file %s\n", file_out );
+    }
+
+    // convert to mesh
+    int** points;
+    int** elems;
+    int node_cnt;
+
+    vol2mesh( nintci, 
+              nintcf, 
+              lcc, 
+              &node_cnt, 
+              &points, 
+              &elems);
+
+    strcat( file_out, ".vtk" );
+    if ( write_result_vtk( file_out, 
+                           nintci, 
+                           nintcf, 
+                           node_cnt,
+                           points, 
+                           elems, 
+                           var ) != 0 ) {
+        printf( "error when trying to write to file %s\n", file_out );
     }
 
     //gc Free all the dynamically allocated memory
