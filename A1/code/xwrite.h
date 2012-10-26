@@ -17,4 +17,6 @@ int write_result_vtk( char* outFileName,
                       int** elems, 
                       double* vector ); 
 
+int write_perf_data( double* perf_data );
+
 #endif /* XWRITE_H_ */

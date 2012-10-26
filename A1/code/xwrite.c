@@ -170,3 +170,22 @@ int write_result_vtk( char *outFileName,
     fclose( fp );
     return 0;
 }
+
+
+int write_perf_data ( double* perf_data ) {
+
+    char* stats_path = "pstats.dat";
+    FILE* stats_file = fopen( stats_path, "w" );
+
+    if( stats_file == NULL ) {
+        printf( "Error opening file %s for writing\n", stats_path );
+        return -1;
+    }
+
+    fclose( stats_file );
+
+    return 0;
+
+}
+
+

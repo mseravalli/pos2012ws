@@ -288,7 +288,18 @@ int main( int argc, char *argv[] ) {
               &points, 
               &elems);
 
-    strcat( file_out, ".vtk" );
+    file_out = "SU.vtk";
+    if ( write_result_vtk( file_out, 
+                           nintci, 
+                           nintcf, 
+                           node_cnt,
+                           points, 
+                           elems, 
+                           su ) != 0 ) {
+        printf( "error when trying to write to file %s\n", file_out );
+    }
+
+    file_out = "VAR.vtk";
     if ( write_result_vtk( file_out, 
                            nintci, 
                            nintcf, 
@@ -297,6 +308,21 @@ int main( int argc, char *argv[] ) {
                            elems, 
                            var ) != 0 ) {
         printf( "error when trying to write to file %s\n", file_out );
+    }
+
+    file_out = "CGUP.vtk";
+    if ( write_result_vtk( file_out, 
+                           nintci, 
+                           nintcf, 
+                           node_cnt,
+                           points, 
+                           elems, 
+                           cgup ) != 0 ) {
+        printf( "error when trying to write to file %s\n", file_out );
+    }
+
+    if ( write_perf_data (NULL) != 0 ) {
+        printf( "error when trying to write performance data\n", file_out );
     }
 
     //gc Free all the dynamically allocated memory
