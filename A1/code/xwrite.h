@@ -1,6 +1,8 @@
 #ifndef XWRITE_H_
 #define XWRITE_H_
 
+#include <papi.h>
+
 int write_result( char *inFileName, 
                   char *outFileName, 
                   int NINTCI, 
@@ -17,6 +19,8 @@ int write_result_vtk( char* outFileName,
                       int** elems, 
                       double* vector ); 
 
-int write_perf_data( double* perf_data );
+int write_perf_data( char* phase, 
+                     long_long exec_time, 
+                     long_long* perf_data );
 
 #endif /* XWRITE_H_ */

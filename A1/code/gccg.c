@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "papi.h"
+#include <papi.h>
 
 #include "vol2mesh.h"
 #include "xread.h"
@@ -33,14 +33,22 @@ int main( int argc, char *argv[] ) {
     char *file_in = argv[2];
     char *file_out = argv[3];
 
-    // init hardware counters
+    // PAPI initialisation start
+
     int Events[NUM_EVENTS] = { PAPI_L2_TCM, 
                                PAPI_L2_TCA, 
-                               PAPI_L3_TCM, 
-                               PAPI_L3_TCA, 
                                PAPI_FP_INS,
                                PAPI_TOT_CYC };
     long_long values[NUM_EVENTS];
+
+    long_long start_usec, end_usec;
+
+    if ( PAPI_library_init( PAPI_VER_CURRENT ) != PAPI_VER_CURRENT ) {
+        printf("Error while initialising PAPI\n" );
+        return EXIT_FAILURE;
+    }
+
+    // PAPI initialisation end
 
     int status = 0;
 
@@ -58,11 +66,12 @@ int main( int argc, char *argv[] ) {
     double *bs, *be, *bn, *bw, *bl, *bh, *bp, *su;
 
     // gc initialization 
-    PAPI_get_real_cyc();
-    if ( PAPI_start_counters( Events, NUM_EVENTS ) != PAPI_OK ) {
+    if ( PAPI_start_counters( Events, 4 ) != PAPI_OK ) {
         printf("Error while using hardware counters\n" );
         return EXIT_FAILURE;
     }
+     
+    start_usec = PAPI_get_real_usec();
 
     // read-in the input file
     int f_status = -1;
@@ -176,6 +185,19 @@ int main( int argc, char *argv[] ) {
     int nor1 = nor - 1;
     //gc finished initalization 
 
+    if ( PAPI_read_counters( values, NUM_EVENTS ) != PAPI_OK ) {
+        printf("Error while using hardware counters\n" );
+        return EXIT_FAILURE;
+    }
+
+    end_usec = PAPI_get_real_usec();
+
+    if ( write_perf_data ( "INPUT", end_usec - start_usec, values ) != 0 ) {
+        printf( "error when trying to write performance data\n" );
+    }
+
+    start_usec = PAPI_get_real_usec();
+
     //gc start computation loop 
     while ( iter < 10000 ) {
 
@@ -283,6 +305,19 @@ int main( int argc, char *argv[] ) {
 
     // gc finished computation loop 
 
+    if ( PAPI_read_counters( values, NUM_EVENTS ) != PAPI_OK ) {
+        printf("Error while using hardware counters\n" );
+        return EXIT_FAILURE;
+    }
+
+    end_usec = PAPI_get_real_usec();
+
+    if ( write_perf_data ( "CALC", end_usec - start_usec, values ) != 0 ) {
+        printf( "error when trying to write performance data\n" );
+    }
+
+    start_usec = PAPI_get_real_usec();
+
     // gc write output file  
     if ( write_result( file_in, 
                        file_out, 
@@ -339,8 +374,15 @@ int main( int argc, char *argv[] ) {
         printf( "error when trying to write to file %s\n", file_out );
     }
 
-    if ( write_perf_data (NULL) != 0 ) {
-        printf( "error when trying to write performance data\n", file_out );
+    if ( PAPI_stop_counters( values, NUM_EVENTS ) != PAPI_OK ) {
+        printf("Error while using hardware counters\n" );
+        return EXIT_FAILURE;
+    }
+
+    end_usec = PAPI_get_real_usec();
+
+    if ( write_perf_data ( "OUTPUT", end_usec - start_usec, values ) != 0 ) {
+        printf( "error when trying to write performance data\n" );
     }
 
     //gc Free all the dynamically allocated memory
