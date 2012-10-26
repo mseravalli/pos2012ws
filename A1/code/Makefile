@@ -8,7 +8,8 @@ CC = gcc
 CFLAGS = -std=c99 -g -O0 
 LIBS = -lm
 
-# Make sure you have loaded the papi module before uncommenting these and include papi.h in the sources
+# Make sure you have loaded the papi module before uncommenting these and 
+# include papi.h in the sources
 CFLAGS += $(PAPI_INC)
 LIBS += $(PAPI_LIB)
 

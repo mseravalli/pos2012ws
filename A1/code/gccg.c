@@ -2,10 +2,13 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include "papi.h"
 
 #include "vol2mesh.h"
 #include "xread.h"
 #include "xwrite.h"
+
+#define NUM_EVENTS  6 
 
 /**
  *
@@ -30,6 +33,15 @@ int main( int argc, char *argv[] ) {
     char *file_in = argv[2];
     char *file_out = argv[3];
 
+    // init hardware counters
+    int Events[NUM_EVENTS] = { PAPI_L2_TCM, 
+                               PAPI_L2_TCA, 
+                               PAPI_L3_TCM, 
+                               PAPI_L3_TCA, 
+                               PAPI_FP_INS,
+                               PAPI_TOT_CYC };
+    long_long values[NUM_EVENTS];
+
     int status = 0;
 
     // internal cells start and end index
@@ -46,6 +58,12 @@ int main( int argc, char *argv[] ) {
     double *bs, *be, *bn, *bw, *bl, *bh, *bp, *su;
 
     // gc initialization 
+    PAPI_get_real_cyc();
+    if ( PAPI_start_counters( Events, NUM_EVENTS ) != PAPI_OK ) {
+        printf("Error while using hardware counters\n" );
+        return EXIT_FAILURE;
+    }
+
     // read-in the input file
     int f_status = -1;
     if ( file_format == FORMAT_BINARY ) {
