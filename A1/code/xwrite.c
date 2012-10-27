@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "xwrite.h"
 
 /**
@@ -172,15 +174,44 @@ int write_result_vtk( char *outFileName,
 }
 
 
-int write_perf_data ( double* perf_data ) {
+int write_perf_data( char* phase,
+                     long_long exec_time, 
+                     long_long* perf_data ) {
 
     char* stats_path = "pstats.dat";
-    FILE* stats_file = fopen( stats_path, "w" );
+
+    // create a new file every run
+    FILE* stats_file = NULL; 
+    
+    if ( strcmp( phase, "INPUT" ) == 0 ) {
+        stats_file = fopen( stats_path, "w" );
+    } else {
+        stats_file = fopen( stats_path, "a" );
+    }
 
     if( stats_file == NULL ) {
         printf( "Error opening file %s for writing\n", stats_path );
         return -1;
     }
+
+    fprintf( stats_file, 
+        "%s_Exec_time=%.4lfs\n", 
+        phase, 
+        (double) exec_time * 1e-6 );
+
+    fprintf( stats_file, "%s_PAPI_L2_TCM=%ld\n", phase, perf_data[0] );
+    fprintf( stats_file, "%s_PAPI_L2_TCA=%ld\n", phase, perf_data[1] );
+    double miss_rate = ( double ) perf_data[0] / ( double ) perf_data[1]; 
+    fprintf( stats_file, "%s_L2_MissRate=%.2lf%%\n", phase,  100 * miss_rate );
+
+    fprintf( stats_file, "%s_PAPI_FPI_INS=%ld\n", phase, perf_data[2] );
+    fprintf( stats_file, "%s_PAPI_TOT_CYC=%ld\n", phase, perf_data[3] );
+
+    double m_flops = ( double ) perf_data[2] / ( double ) exec_time;
+    fprintf( stats_file, "%s_Mflops=%.4lf\n", phase, m_flops );
+
+    double util = 0.0;
+    fprintf( stats_file, "%s_Util=%.4lf\n", phase, util );
 
     fclose( stats_file );
 
