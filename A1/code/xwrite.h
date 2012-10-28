@@ -19,7 +19,9 @@ int write_result_vtk( char* outFileName,
                       int** elems, 
                       double* vector ); 
 
-int write_perf_data( char* phase, 
+int write_perf_data( char* current_sim,
+                     char* format,
+                     char* phase, 
                      long_long exec_time, 
                      long_long* perf_data );
 

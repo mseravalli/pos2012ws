@@ -63,7 +63,10 @@ int write_result( char *inFileName,
         } while ( I4 < I2 );
     }
 
-    FILE *fp = fopen( outFileName, "w" );
+    char out_file_name[128];
+    strcpy( out_file_name, outFileName); 
+    strcat( out_file_name, ".dat" );
+    FILE *fp = fopen( out_file_name, "w" );
     if ( fp == NULL ) {
         printf( "Error opening file %s for writing\n", outFileName );
         return -1;
@@ -174,11 +177,17 @@ int write_result_vtk( char *outFileName,
 }
 
 
-int write_perf_data( char* phase,
+int write_perf_data( char* current_sim,
+                     char* format,
+                     char* phase,
                      long_long exec_time, 
                      long_long* perf_data ) {
 
-    char* stats_path = "pstats.dat";
+    char stats_path[128];
+    strcpy( stats_path, current_sim );
+    strcat( stats_path, "." );
+    strcat( stats_path, format );
+    strcat( stats_path, ".pstats.dat" );
 
     // create a new file every run
     FILE* stats_file = NULL; 

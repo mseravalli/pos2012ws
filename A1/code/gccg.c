@@ -192,7 +192,11 @@ int main( int argc, char *argv[] ) {
 
     end_usec = PAPI_get_real_usec();
 
-    if ( write_perf_data ( "INPUT", end_usec - start_usec, values ) != 0 ) {
+    if ( write_perf_data ( file_out, 
+                           argv[1],
+                           "INPUT", 
+                           end_usec - start_usec, 
+                           values ) != 0 ) {
         printf( "error when trying to write performance data\n" );
     }
 
@@ -312,7 +316,11 @@ int main( int argc, char *argv[] ) {
 
     end_usec = PAPI_get_real_usec();
 
-    if ( write_perf_data ( "CALC", end_usec - start_usec, values ) != 0 ) {
+    if ( write_perf_data ( file_out, 
+                           argv[1],
+                           "CALC", 
+                           end_usec - start_usec, 
+                           values ) != 0 ) {
         printf( "error when trying to write performance data\n" );
     }
 
@@ -381,7 +389,11 @@ int main( int argc, char *argv[] ) {
 
     end_usec = PAPI_get_real_usec();
 
-    if ( write_perf_data ( "OUTPUT", end_usec - start_usec, values ) != 0 ) {
+    if ( write_perf_data ( argv[3],
+                           argv[1],
+                           "OUTPUT", 
+                           end_usec - start_usec, 
+                           values ) != 0 ) {
         printf( "error when trying to write performance data\n" );
     }
 

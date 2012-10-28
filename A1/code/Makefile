@@ -5,7 +5,7 @@
 ####################################################################
 
 CC = icc
-CFLAGS = -std=c99 -g -O0 
+CFLAGS = -std=c99 -O2 
 LIBS = -lm
 
 # Make sure you have loaded the papi module before uncommenting these and 
@@ -28,4 +28,4 @@ binconv: $(OBJS_BC)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 clean:
-	rm -rf *.o gccg binconv
+	rm -rf *.o gccg binconv *.vtk *.dat
