@@ -192,7 +192,7 @@ int main( int argc, char *argv[] ) {
 
     end_usec = PAPI_get_real_usec();
 
-    if ( write_perf_data ( "", 
+    if ( write_perf_data ( argv[3], 
                            "",
                            "INPUT", 
                            end_usec - start_usec, 
@@ -316,7 +316,7 @@ int main( int argc, char *argv[] ) {
 
     end_usec = PAPI_get_real_usec();
 
-    if ( write_perf_data ( "", 
+    if ( write_perf_data ( argv[3], 
                            "",
                            "CALC", 
                            end_usec - start_usec, 
@@ -349,8 +349,8 @@ int main( int argc, char *argv[] ) {
               &points, 
               &elems);
 
-    file_out = "SU.vtk";
-    if ( write_result_vtk( file_out, 
+    if ( write_result_vtk( argv[3],
+                           "SU.vtk", 
                            nintci, 
                            nintcf, 
                            node_cnt,
@@ -360,8 +360,8 @@ int main( int argc, char *argv[] ) {
         printf( "error when trying to write to file %s\n", file_out );
     }
 
-    file_out = "VAR.vtk";
-    if ( write_result_vtk( file_out, 
+    if ( write_result_vtk( argv[3],
+                           "VAR.vtk", 
                            nintci, 
                            nintcf, 
                            node_cnt,
@@ -371,8 +371,8 @@ int main( int argc, char *argv[] ) {
         printf( "error when trying to write to file %s\n", file_out );
     }
 
-    file_out = "CGUP.vtk";
-    if ( write_result_vtk( file_out, 
+    if ( write_result_vtk( argv[3], 
+                           "CGUP.vtk", 
                            nintci, 
                            nintcf, 
                            node_cnt,
@@ -389,7 +389,7 @@ int main( int argc, char *argv[] ) {
 
     end_usec = PAPI_get_real_usec();
 
-    if ( write_perf_data ( "",
+    if ( write_perf_data ( argv[3],
                            "",
                            "OUTPUT", 
                            end_usec - start_usec, 
