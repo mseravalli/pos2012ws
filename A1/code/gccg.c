@@ -8,7 +8,7 @@
 #include "xread.h"
 #include "xwrite.h"
 
-#define NUM_EVENTS  6 
+#define NUM_EVENTS  4 
 
 /**
  *
@@ -66,7 +66,7 @@ int main( int argc, char *argv[] ) {
     double *bs, *be, *bn, *bw, *bl, *bh, *bp, *su;
 
     // gc initialization 
-    if ( PAPI_start_counters( Events, 4 ) != PAPI_OK ) {
+    if ( PAPI_start_counters( Events, NUM_EVENTS ) != PAPI_OK ) {
         printf("Error while using hardware counters\n" );
         return EXIT_FAILURE;
     }
@@ -192,8 +192,8 @@ int main( int argc, char *argv[] ) {
 
     end_usec = PAPI_get_real_usec();
 
-    if ( write_perf_data ( file_out, 
-                           argv[1],
+    if ( write_perf_data ( "", 
+                           "",
                            "INPUT", 
                            end_usec - start_usec, 
                            values ) != 0 ) {
@@ -316,8 +316,8 @@ int main( int argc, char *argv[] ) {
 
     end_usec = PAPI_get_real_usec();
 
-    if ( write_perf_data ( file_out, 
-                           argv[1],
+    if ( write_perf_data ( "", 
+                           "",
                            "CALC", 
                            end_usec - start_usec, 
                            values ) != 0 ) {
@@ -389,8 +389,8 @@ int main( int argc, char *argv[] ) {
 
     end_usec = PAPI_get_real_usec();
 
-    if ( write_perf_data ( argv[3],
-                           argv[1],
+    if ( write_perf_data ( "",
+                           "",
                            "OUTPUT", 
                            end_usec - start_usec, 
                            values ) != 0 ) {

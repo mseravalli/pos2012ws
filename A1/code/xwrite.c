@@ -185,9 +185,9 @@ int write_perf_data( char* current_sim,
 
     char stats_path[128];
     strcpy( stats_path, current_sim );
-    strcat( stats_path, "." );
-    strcat( stats_path, format );
-    strcat( stats_path, ".pstats.dat" );
+//  strcat( stats_path, "." );
+//  strcat( stats_path, format );
+    strcat( stats_path, "pstats.dat" );
 
     // create a new file every run
     FILE* stats_file = NULL; 
@@ -219,8 +219,8 @@ int write_perf_data( char* current_sim,
     double m_flops = ( double ) perf_data[2] / ( double ) exec_time;
     fprintf( stats_file, "%s_Mflops=%.4lf\n", phase, m_flops );
 
-    double util = 0.0;
-    fprintf( stats_file, "%s_Util=%.4lf\n", phase, util );
+    double util = ( double ) perf_data[3] / ( ( double ) exec_time * 20.0 ); 
+    fprintf( stats_file, "%s_Util=%.4lf%%\n", phase, util );
 
     fclose( stats_file );
 
