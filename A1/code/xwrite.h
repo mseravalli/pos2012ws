@@ -11,7 +11,8 @@ int write_result( char *inFileName,
                   int ITER, 
                   double RATIO );
 
-int write_result_vtk( char* outFileName, 
+int write_result_vtk( char* current_sim,
+                      char* outFileName, 
                       int startIdx, 
                       int endIdx, 
                       int nodeCnt, 

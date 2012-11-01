@@ -106,7 +106,8 @@ int write_result( char *inFileName,
     return 0;
 }
 
-int write_result_vtk( char *outFileName, 
+int write_result_vtk( char* current_sim,
+                      char *outFileName, 
                       int startIdx, 
                       int endIdx, 
                       int nodeCnt, 
@@ -115,7 +116,11 @@ int write_result_vtk( char *outFileName,
                       double *vector ) {
     int i,j;
     int cellCnt = endIdx - startIdx + 1;
-    FILE *fp = fopen( outFileName, "w" );
+    char vtk_path[128];
+    strcpy( vtk_path, current_sim );
+    strcat( vtk_path, "." );
+    strcat( vtk_path, outFileName );
+    FILE *fp = fopen( vtk_path, "w" );
     if( fp == NULL ) {
         printf( "Error opening file %s for writing\n", outFileName );
         return -1;
@@ -187,7 +192,7 @@ int write_perf_data( char* current_sim,
     strcpy( stats_path, current_sim );
 //  strcat( stats_path, "." );
 //  strcat( stats_path, format );
-    strcat( stats_path, "pstats.dat" );
+    strcat( stats_path, ".pstats.dat" );
 
     // create a new file every run
     FILE* stats_file = NULL; 
@@ -220,7 +225,7 @@ int write_perf_data( char* current_sim,
     fprintf( stats_file, "%s_Mflops=%.4lf\n", phase, m_flops );
 
     double util = ( double ) perf_data[3] / ( ( double ) exec_time * 20.0 ); 
-    fprintf( stats_file, "%s_Util=%.4lf%%\n", phase, util );
+    fprintf( stats_file, "%s_Util=%.2lf%%\n", phase, util );
 
     fclose( stats_file );
 
