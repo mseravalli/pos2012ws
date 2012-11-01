@@ -79,7 +79,7 @@ Execution environment
 
 \begin_layout Standard
 All the test have been performed on the Linux cluster hosted by LRZ in the
- MPP batch partition.
+ MPP partition.
  The technical specifications of the execution environment can be found
  in Table 
 \begin_inset CommandInset ref
@@ -100,7 +100,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="13" columns="2">
+<lyxtabular version="3" rows="14" columns="2">
 <features tabularvalignment="middle">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
@@ -258,7 +258,7 @@ Peak Performance per Core
 \begin_inset Text
 
 \begin_layout Plain Layout
-16GFlops
+~8GFlops
 \end_layout
 
 \end_inset
@@ -278,7 +278,7 @@ Peak Performance per Node
 \begin_inset Text
 
 \begin_layout Plain Layout
-256GFlops
+~128GFlops
 \end_layout
 
 \end_inset
@@ -298,7 +298,7 @@ Frequency Scaling
 \begin_inset Text
 
 \begin_layout Plain Layout
-800MHz – 2000MHz 
+800, 1100, 1400, 1700, 2000 MHz 
 \end_layout
 
 \end_inset
@@ -318,7 +318,7 @@ L3 Cache per Socket (shared)
 \begin_inset Text
 
 \begin_layout Plain Layout
-16MB (2 x 6MB)
+12MB (2 x 6MB)
 \end_layout
 
 \end_inset
@@ -345,7 +345,7 @@ L2 Cache per core
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -354,11 +354,31 @@ L1 Cache per core
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 64KB instruction + 64 KB data
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Memory per node
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16GB
 \end_layout
 
 \end_inset
@@ -399,8 +419,284 @@ name "tab:Execution-Environment"
 Metrics
 \end_layout
 
+\begin_layout Standard
+For the assignment Cache Miss Rate for L1 and L2 cache, 
+\begin_inset Formula $MFlops$
+\end_inset
+
+ and CPU utilization needed to be measured.
+\end_layout
+
+\begin_layout Standard
+The Cache Miss Rates are given by
+\begin_inset Formula 
+\[
+Cache\, Miss\, Rate\,=\,\frac{Total\, Cache\, Misses}{Total\, Cache\, Accesses}
+\]
+
+\end_inset
+
+the Total Cache Misses are given by 
+\begin_inset Formula 
+\[
+Total\, Cache\, Misses\,=Data\, Cache\, Misses\,+\, Instruction\, Cache\, Misses
+\]
+
+\end_inset
+
+similarly the Total Cache Accesses can be derived by
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+Total\, Cache\, Accesses\,=Data\, Cache\, Accesses\,+\, Instruction\, Cache\, Accesses
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Formula $Flops$
+\end_inset
+
+ (
+\series bold
+Fl
+\series default
+oating-point 
+\series bold
+o
+\series default
+perations 
+\series bold
+p
+\series default
+er 
+\series bold
+s
+\series default
+econd) measure the number of floating point operations per second, the result
+ can be achieved by taking the ratio between the execution time and the
+ floating point operations performed in that period:
+\begin_inset Formula 
+\[
+MFlops=\frac{Floating-point\, Operarations}{Wallclock\, Time\,(\mu sec)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Lastly, the CPU utilization is given by
+\begin_inset Formula 
+\[
+CPU\, Util\,=\,\frac{Total\, Cycles\,\times\, Clock(sec)}{Wallclock\, Time(sec)}
+\]
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section*
 Results
+\end_layout
+
+\begin_layout Subsection*
+Peak Performance Comparison
+\end_layout
+
+\begin_layout Standard
+The system has a theoretical maximum performance of almost 
+\begin_inset Formula $8GFlops$
+\end_inset
+
+ per core, while the application's peak is of 
+\begin_inset Formula $0.586GFlops$
+\end_inset
+
+ i.e.
+ 
+\begin_inset Formula $7.35\%$
+\end_inset
+
+ of the theoretical peak.
+ 
+\end_layout
+
+\begin_layout Subsection*
+Compiler Optimization
+\end_layout
+
+\begin_layout Standard
+Different compiling optimizations have been applied to the provided code.
+ In Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Compiler-Optimizations"
+
+\end_inset
+
+ it is possible to see the effect of every flag.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/exec_tine.png
+	width 100text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Compiler Optimization
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Compiler-Optimizations"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In addition to the proposed optimization flags also 
+\begin_inset Formula $-fast$
+\end_inset
+
+ was adopted, this adds to 
+\begin_inset Formula $-O3$
+\end_inset
+
+ other improvements like 
+\begin_inset Formula $-ipo$
+\end_inset
+
+, 
+\begin_inset Formula $-static$
+\end_inset
+
+, 
+\begin_inset Formula $-no-prec-div$
+\end_inset
+
+ and 
+\begin_inset Formula $-xHOST$
+\end_inset
+
+.
+ Unfortunately, 
+\begin_inset Formula $-fast$
+\end_inset
+
+ does not introduce a significant speedup, in some cases there is a regression
+ if compared to 
+\begin_inset Formula $-O3$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Lastly, also the automatic vectorisation was tested by adopting the 
+\begin_inset Formula $-xSSE2$
+\end_inset
+
+ flag.
+ With this option the compiler adopts whenever possible vector instructions.
+\end_layout
+
+\begin_layout Subsection*
+Cache Optimization
+\end_layout
+
+\begin_layout Standard
+With respect to the L2 cache the optimization flags increase the Cache Miss
+ Rate in all given scenarios as it can be seen in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Cache-Optimization"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename figures/cache.png
+	width 100text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Cache Optimization
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Cache-Optimization"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Also the prefetching solution does not yield to any visible improvements.
+ On the contrary, in particular for 
+\begin_inset Formula $-opt-prefetch=4$
+\end_inset
+
+ the Miss Rate actually increases, this could be due to the fact that when
+ prefectching new data, some cache lines that could have been useful are
+ actually invalidated, causing additional overhead.
 \end_layout
 
 \begin_layout Section*
@@ -409,14 +705,14 @@ Binary Input
 
 \begin_layout Standard
 One of the aims of the assignment was to test different behaviors when using
- a binary input instead of a text file.
+ a binary input instead of a text input.
 \end_layout
 
 \begin_layout Standard
 The difference between these two representations consists in the fact that
  the first one stores only the binary representation of the numbers, while
- the latter stores instead the ASCII representation of the numbers plus
- additional spaces for better legibility.
+ the latter stores  the ASCII representation of the numbers plus additional
+ spaces for better legibility.
  
 \end_layout
 
