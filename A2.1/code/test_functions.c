@@ -5,6 +5,8 @@
  * @author V. Petkov
  */
 
+#include "parmetis.h"
+
 int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index, int num_elems,
                       double *cgup, int* epart, int* npart, int* objval) {
     // Return an error if not implemented

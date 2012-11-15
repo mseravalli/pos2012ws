@@ -5,8 +5,8 @@
 ####################################################################
 
 CC = mpicc
-CFLAGS = -Wall -g -O0 
-LIBS = -lm
+CFLAGS = $(PARMETIS_INC) -Wall -g # -O0 
+LIBS = -lm $(PARMETIS_LIB)
 
 LIBPOS=libpos.a
 AR = ar
