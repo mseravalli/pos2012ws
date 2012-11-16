@@ -6,22 +6,22 @@
  */
 
 #include <stdlib.h>
-#include "parmetis.h"
+#include "metis.h"
 
 int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index,
-                      long ne, double *cgup, long* epart, long* npart,
-                      long* objval) {
+                      idx_t ne, double *cgup, idx_t* epart, idx_t* npart,
+                      idx_t* objval) {
     int metis_result = METIS_ERROR;
 
-    long nn = 0;
-    long* eptr = NULL;
-    long* eind = NULL;
-    long* vwgt = NULL; // can stay NULL
-    long* vsize = NULL; // can stay NULL
-    long* ncommon = NULL;
-    long* nparts = NULL;
-    float* tpwgts = NULL; // can stay NULL
-    long* options = NULL; // can stay NULL
+    idx_t nn = 0;
+    idx_t* eptr = NULL;
+    idx_t* eind = NULL;
+    idx_t* vwgt = NULL; // can stay NULL
+    idx_t* vsize = NULL; // can stay NULL
+    idx_t* ncommon = NULL;
+    idx_t* nparts = NULL;
+    real_t* tpwgts = NULL; // can stay NULL
+    idx_t* options = NULL; // can stay NULL
 
     metis_result = METIS_PartMeshDual(&ne, &nn, eptr, eind, vwgt, vsize, 
                                       ncommon, nparts, tpwgts, options, 
