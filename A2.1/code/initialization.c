@@ -17,10 +17,55 @@ int partition(char* part_type,
               int* elems,
               int ncommon, int nparts,
               int** objval, int** epart, int** npart) {
-    int result = 0;
+    int result = -1;
 
+    idx_t ne = elems_count;
+    idx_t nn = points_count;
+
+    idx_t* eptr = malloc((ne + 1) * sizeof(idx_t));
+    idx_t* eind = elems;
+    idx_t* vwgt = NULL;
+    idx_t* vsize = NULL;
+    real_t* tpwgts = NULL;
+    idx_t options[METIS_NOPTIONS];
+
+    *epart = malloc(ne * sizeof(int));
+    *npart = malloc(nn * sizeof(int));
+
+    for (int i = 0; i < ne + 1; ++i) {
+        eptr[i] = (idx_t) (i * 8);
+    }
+
+    printf("call the metis function\n");
     
+    METIS_SetDefaultOptions(options);
     
+    result = METIS_PartMeshDual(&ne, &nn,
+                                eptr, eind,
+                                vwgt, vsize,
+                                &ncommon, &nparts,
+                                tpwgts, options,
+                                *objval, *epart, *npart);
+
+    switch(result) {
+        case METIS_OK:
+            result = 0;
+            break;
+        case METIS_ERROR_INPUT:
+            printf("Metis input error \n");
+            break;
+        case METIS_ERROR_MEMORY:
+            printf("Metis memory error \n");
+            break;
+        case METIS_ERROR:
+            printf("Metis error \n");
+            break;
+        default:
+            break;
+    }
+    
+    fflush(stdout);
+
     return result;
 }
 
@@ -72,10 +117,10 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
     for ( i = (*nintci); i <= (*nintcf); i++ )
         (*cgup)[i] = 1.0 / ((*bp)[i]);
 
-    int ncommon = 1;
-    int nparts = 6;
+    int ncommon = 4;
+    int nparts = 2;
     int part_result = partition(part_type, 
-                                (nintcf - nintci), *points_count, 
+                                (*nintcf - *nintci), *points_count, 
                                 *elems,
                                 ncommon, nparts,
                                 objval, epart, npart);
