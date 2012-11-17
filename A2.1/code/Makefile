@@ -5,8 +5,8 @@
 ####################################################################
 
 CC = mpicc
-CFLAGS = -Wall -g -O0 
-LIBS = -lm
+CFLAGS = -Wall -g -O0 -std=c99
+LIBS = -lmetis -lm
 
 LIBPOS=libpos.a
 AR = ar
