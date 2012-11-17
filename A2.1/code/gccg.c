@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 #include "mpi.h"
+#include "metis.h"
 
 #include "initialization.h"
 #include "compute_solution.h"
@@ -55,9 +56,9 @@ int main(int argc, char *argv[]) {
     int** recv_list;    /// send lists for the other neighbor (see send_list)
 
     /** Metis Results */
-    int* epart;     /// partition vector for the elements of the mesh
-    int* npart;     /// partition vector for the points (nodes) of the mesh
-    int* objval;    /// resulting edgecut of total communication volume (classical distrib->zeros)
+    idx_t* epart;     /// partition vector for the elements of the mesh
+    idx_t* npart;     /// partition vector for the points (nodes) of the mesh
+    idx_t* objval;    /// resulting edgecut of total communication volume (classical distrib->zeros)
 
     MPI_Init(&argc, &argv);    /// Start MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);    /// Get current process id

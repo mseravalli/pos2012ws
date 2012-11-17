@@ -7,7 +7,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "metis.h"
 
 #include "util_read_files.h"
 #include "initialization.h"
@@ -15,15 +14,15 @@
 int partition(char* part_type, 
               int elems_count, int points_count, 
               int* elems,
-              int ncommon, int nparts,
-              int** objval, int** epart, int** npart) {
+              idx_t ncommon, idx_t nparts,
+              idx_t** objval, idx_t** epart, idx_t** npart) {
     int result = -1;
 
     idx_t ne = elems_count;
     idx_t nn = points_count;
 
-    idx_t* eptr = malloc((ne + 1) * sizeof(idx_t));
-    idx_t* eind = elems;
+    idx_t* eptr = malloc((ne + 2) * sizeof(idx_t));
+    idx_t* eind = malloc((ne + 1) * 8 * sizeof(idx_t));
     idx_t* vwgt = NULL;
     idx_t* vsize = NULL;
     real_t* tpwgts = NULL;
@@ -32,8 +31,12 @@ int partition(char* part_type,
     *epart = malloc(ne * sizeof(int));
     *npart = malloc(nn * sizeof(int));
 
-    for (int i = 0; i < ne + 1; ++i) {
+    // init eprt and eind
+    for (int i = 0; i < ne + 2; ++i) {
         eptr[i] = (idx_t) (i * 8);
+    }
+    for (int i = 0; i < (ne + 1) * 8; ++i) {
+        eptr[i] = (idx_t) elems[i];
     }
 
     printf("call the metis function\n");
@@ -75,7 +78,7 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
                    int*** points, int** elems, double** var, double** cgup, double** oc,
                    double** cnorm, int** local_global_index, int** global_local_index,
                    int* neighbors_count, int** send_count, int*** send_list, int** recv_count,
-                   int*** recv_list, int** epart, int** npart, int** objval) {
+                   int*** recv_list, idx_t** epart, idx_t** npart, idx_t** objval) {
     /********** START INITIALIZATION **********/
     int i = 0;
     // read-in the input file
@@ -117,8 +120,8 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
     for ( i = (*nintci); i <= (*nintcf); i++ )
         (*cgup)[i] = 1.0 / ((*bp)[i]);
 
-    int ncommon = 4;
-    int nparts = 2;
+    idx_t ncommon = 4;
+    idx_t nparts = 2;
     int part_result = partition(part_type, 
                                 (*nintcf - *nintci), *points_count, 
                                 *elems,
