@@ -1,27 +1,32 @@
 /**
- * Initialization step - parse the input file, compute data distribution, initialize LOCAL computational arrays
+ * Initialization step - parse the input file, compute data distribution, 
+ * initialize LOCAL computational arrays
  *
  * @date 22-Oct-2012
  * @author V. Petkov
  */
 
 #include <stdlib.h>
+#include "metis.h"
 
 #include "util_read_files.h"
 #include "initialization.h"
 
-int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int* nextci,
-                   int* nextcf, int*** lcc, double** bs, double** be, double** bn, double** bw,
-                   double** bl, double** bh, double** bp, double** su, int* points_count,
-                   int*** points, int** elems, double** var, double** cgup, double** oc,
-                   double** cnorm, int** local_global_index, int** global_local_index,
-                   int* neighbors_count, int** send_count, int*** send_list, int** recv_count,
-                   int*** recv_list, long** epart, long** npart, long** objval) {
+int initialization(char* file_in, char* part_type, int* nintci, int* nintcf,
+                   int* nextci, int* nextcf, int*** lcc, double** bs,
+                   double** be, double** bn, double** bw, double** bl,
+                   double** bh, double** bp, double** su, int* points_count,
+                   int*** points, int** elems, double** var, double** cgup,
+                   double** oc, double** cnorm, int** local_global_index,
+                   int** global_local_index, int* neighbors_count,
+                   int** send_count, int*** send_list, int** recv_count,
+                   int*** recv_list, idx_t** epart, idx_t** npart, idx_t** objval) {
     /********** START INITIALIZATION **********/
     int i = 0;
     // read-in the input file
-    int f_status = read_binary_geo(file_in, &*nintci, &*nintcf, &*nextci, &*nextcf, &*lcc, &*bs,
-                                   &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su, &*points_count,
+    int f_status = read_binary_geo(file_in, &*nintci, &*nintcf, &*nextci,
+                                   &*nextcf, &*lcc, &*bs, &*be, &*bn, &*bw, &*bl,
+                                   &*bh, &*bp, &*su, &*points_count,
                                    &*points, &*elems);
 
     if ( f_status != 0 ) return f_status;
@@ -55,6 +60,28 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
 
     for ( i = (*nintci); i <= (*nintcf); i++ )
         (*cgup)[i] = 1.0 / ((*bp)[i]);
+
+    int metis_result = METIS_ERROR;
+
+    
+    idx_t ne = (idx_t)(*nextcf);
+    idx_t nn = (idx_t)(*points_count);
+    idx_t* eptr = calloc(ne + 1, sizeof(idx_t));
+    idx_t* eind = calloc(nn, sizeof(idx_t));
+    idx_t* vwgt = NULL; // can stay NULL
+    idx_t* vsize = NULL; // can stay NULL
+    idx_t ncommon = 1;
+    idx_t nparts = 6;
+    real_t* tpwgts = NULL; // can stay NULL
+    idx_t* options = NULL; // can stay NULL
+
+    metis_result = METIS_PartMeshDual(&ne, &nn, 
+                                      eptr, eind, 
+                                      vwgt, vsize, 
+                                      &ncommon, &nparts, 
+                                      tpwgts, options, 
+                                      *objval, *epart, *npart);
+
 
     return 0;
 }

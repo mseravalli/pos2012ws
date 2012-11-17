@@ -8,8 +8,10 @@
 #ifndef TEST_FUNCTIONS_H_
 #define TEST_FUNCTIONS_H_
 
+#include "metis.h"
+
 int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index, 
-                      long ne, double *cgup, long* epart, long* npart, 
+                      long ne, double *cgup, long* epart, long* nparts, 
                       long* objval);
 
 int test_communication(char *file_in, char *file_vtk_out, int *local_global_index, int *num_elems,
