@@ -6,7 +6,7 @@
 
 CC = mpicc
 CFLAGS = $(METIS_INC) -std=c99 -Wall -g # -O 
-LIBS = -lm $(METIS_LIB)
+LIBS = -lmetis -lm $(METIS_LIB)
 
 LIBPOS=libpos.a
 AR = ar

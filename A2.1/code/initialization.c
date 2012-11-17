@@ -7,7 +7,6 @@
  */
 
 #include <stdlib.h>
-#include "metis.h"
 
 #include "util_read_files.h"
 #include "initialization.h"
@@ -74,6 +73,8 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf,
     idx_t nparts = 6;
     real_t* tpwgts = NULL; // can stay NULL
     idx_t* options = NULL; // can stay NULL
+
+    printf("i got here \n"); 
 
     metis_result = METIS_PartMeshDual(&ne, &nn, 
                                       eptr, eind, 
