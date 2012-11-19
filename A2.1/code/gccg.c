@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
     int* elems;    /// definition of the cells using their nodes (points) - each cell has 8 points
 
     /** Mapping between local and remote cell indices */
+    int local_elems;
     int* local_global_index;    /// local to global index mapping
     int* global_local_index;    /// global to local index mapping
 
@@ -75,20 +76,28 @@ int main(int argc, char *argv[]) {
 
     /********** START INITIALIZATION **********/
     // read-in the input file
-    int init_status = initialization(file_in, part_type, &nintci, &nintcf, &nextci, &nextcf, &lcc,
-                                     &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &points_count, &points,
-                                     &elems, &var, &cgup, &oc, &cnorm, &local_global_index,
-                                     &global_local_index, &neighbors_count, &send_count, &send_list,
-                                     &recv_count, &recv_list, &epart, &npart, &objval);
+    int init_status = initialization(file_in, part_type, &nintci, &nintcf, 
+                                     &nextci, &nextcf, &lcc, 
+                                     &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, 
+                                     &points_count, &points, &elems, 
+                                     &var, &cgup, &oc, &cnorm, 
+                                     &local_global_index, &global_local_index, 
+                                     &neighbors_count, 
+                                     &send_count, &send_list,
+                                     &recv_count, &recv_list, 
+                                     &epart, &npart, &objval, &local_elems);
 
     if ( init_status != 0 ) {
         fprintf(stderr, "Failed to initialize data!\n");
         MPI_Abort(MPI_COMM_WORLD, my_rank);
     }
 
+    char file_vtk_out[256];
+    sprintf(file_vtk_out, "%s_.vtk", out_prefix);
+
     // Implement this function in test_functions.c and call it here
-    /* test_distribution(file_in, file_vtk_out, local_global_index, 
-     num_elems, cgup_local); */
+    test_distribution(file_in, file_vtk_out, local_global_index, 
+                      local_elems, cgup); 
 
     // Implement this function in test_functions.c and call it here
     /*test_communication(file_in, file_vtk_out, local_global_index, num_elems,

@@ -83,16 +83,17 @@ int classical_partition(char* part_type,
     return result;
 }
 
-int map_local_global(int elems_count, idx_t* epart, int** local_global) {
+int map_local_global(int elems_count, idx_t* epart, int** local_global,
+                     int* local_elems) {
     int result = 0;
 
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int local_elems = 0;
+    *local_elems = 0;
     for (int i = 0; i < elems_count; ++i) {
         if (epart[i] == rank) {
-            local_elems++;
+            (*local_elems)++;
         }
     }
 
@@ -100,7 +101,7 @@ int map_local_global(int elems_count, idx_t* epart, int** local_global) {
      * the local_global array will reference the position
      * of the current element within the elems array
      */
-    *local_global = malloc(local_elems * sizeof(int));
+    *local_global = malloc((*local_elems) * sizeof(int));
     for (int i = 0, j = 0; i < elems_count; ++i) {
         if (epart[i] == rank) {
             (*local_global)[j] = i * 8;
@@ -117,7 +118,8 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
                    int*** points, int** elems, double** var, double** cgup, double** oc,
                    double** cnorm, int** local_global_index, int** global_local_index,
                    int* neighbors_count, int** send_count, int*** send_list, int** recv_count,
-                   int*** recv_list, idx_t** epart, idx_t** npart, idx_t* objval) {
+                   int*** recv_list, idx_t** epart, idx_t** npart, idx_t* objval, 
+                   int* local_elems ) {
     /********** START INITIALIZATION **********/
     int i = 0;
     // read-in the input file
@@ -160,8 +162,11 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
     /** Partition data */
 
     int part_result = -1;
+
     idx_t ncommon = 4;
-    idx_t nparts = 6;
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    idx_t nparts = (idx_t) size;
 
     int elems_count = (*nintcf - *nintci);
     
@@ -184,7 +189,7 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
         return -1;
     }
 
-    map_local_global(elems_count, *epart, local_global_index);
+    map_local_global(elems_count, *epart, local_global_index, local_elems);
 
     return 0;
 }
