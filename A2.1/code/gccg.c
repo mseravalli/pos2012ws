@@ -132,6 +132,10 @@ int main(int argc, char *argv[]) {
     }
     free(points);
 
+    free(epart);
+    free(npart);
+    free(local_global_index);
+
     MPI_Finalize();    /// Cleanup MPI
 
     return 0;

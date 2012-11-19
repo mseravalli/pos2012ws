@@ -94,8 +94,8 @@ int store_simulation_stats(char *in_file_name, char *out_file_name, int nintci, 
 }
 
 void vtk_write_unstr_grid_header(const char *experiment_name, const char *out_file_name,
-                                 int start_index, int end_index, int points_count, int **points,
-                                 int *elems) {
+                                 int start_index, int end_index, int points_count, 
+                                 int **points, int *elems) {
     int i, j;
     FILE *fp = NULL;
     // Total number of elements (cells)
@@ -113,9 +113,11 @@ void vtk_write_unstr_grid_header(const char *experiment_name, const char *out_fi
     fprintf(fp, "DATASET UNSTRUCTURED_GRID\n");
 
     /*
-     * The first line notes how many points there will be and in which format they'll be supplied (here "DOUBLE").
+     * The first line notes how many points there will be and in which format 
+     * they'll be supplied (here "DOUBLE").
      * Each following line contains the xyz-coordinates of a point.
-     * Based on this list, each point is assigned an id. The first point has id 0, the second point id 1, and so forth.
+     * Based on this list, each point is assigned an id. The first point has 
+     * id 0, the second point id 1, and so forth.
      */
     fprintf(fp, "POINTS %d DOUBLE\n", points_count);
     for ( i = 0; i < points_count; i++ )
@@ -124,9 +126,13 @@ void vtk_write_unstr_grid_header(const char *experiment_name, const char *out_fi
     fprintf(fp, "\n");
 
     /*
-     * The first line notes how many cells there will be and how many numbers total will be supplied in the CELLS-block.
-     * Each following cell line starts with a number saying how many point IDs are to be read in that line (here 8) followed by the list of those point IDs.
-     * Based on this list, each cell is assigned an id. The first cell has id 0, the second id 1, etc.
+     * The first line notes how many cells there will be and how many numbers
+     * total will be supplied in the CELLS-block.
+     * Each following cell line starts with a number saying how many point IDs
+     * are to be read in that line (here 8) followed by the list of those 
+     * point IDs.
+     * Based on this list, each cell is assigned an id. The first cell has 
+     * id 0, the second id 1, etc.
      */
     fprintf(fp, "CELLS %d %d\n", elem_count, elem_count * 9);
     for ( i = 0; i < elem_count; i++ ) {
@@ -138,9 +144,12 @@ void vtk_write_unstr_grid_header(const char *experiment_name, const char *out_fi
     fprintf(fp, "\n");
 
     /*
-     * The first line gives how many cell-types are to be set (= the number of cells given in CELLS).
-     * The following line is a list of cell-types that are assigned to all cells. The first cell is of type "11", so is the second cell and so forth.
-     * Cell type "11" is VTK_VOXEL (volume cell) and requires 8 point coordinates to define the  of each cell (given in CELLS).
+     * The first line gives how many cell-types are to be set (= the number 
+     * of cells given in CELLS).
+     * The following line is a list of cell-types that are assigned to all 
+     * cells. The first cell is of type "11", so is the second cell and so forth.
+     * Cell type "11" is VTK_VOXEL (volume cell) and requires 8 point 
+     * coordinates to define the  of each cell (given in CELLS).
      */
     fprintf(fp, "CELL_TYPES %d\n", elem_count);
     for ( i = 0; i < elem_count; i++ )
@@ -149,7 +158,8 @@ void vtk_write_unstr_grid_header(const char *experiment_name, const char *out_fi
 
     /*
      * Denotes the beginning of the datasets that will be assigned to the cell.
-     * POINT_DATA can be used to assign the datasets to the points instead of the cells.
+     * POINT_DATA can be used to assign the datasets to the points instead of 
+     * the cells.
      */
     fprintf(fp, "CELL_DATA %d\n", elem_count);
     fprintf(fp, "\n");
@@ -168,8 +178,10 @@ void vtk_append_double(const char *out_file_name, const char *var_name, int star
     }
 
     /*
-     * The first line gives the name of the dataset (variable) and its type (here "DOUBLE")
-     * The second line selects the color table to use and it is usually "LOOKUP_TABLE default".
+     * The first line gives the name of the dataset (variable) and its type 
+     * (here "DOUBLE")
+     * The second line selects the color table to use and it is usually 
+     * "LOOKUP_TABLE default".
      * The following lines contain a value of the dataset per line
      */
     fprintf(fp, "SCALARS %s DOUBLE\n", var_name);
@@ -182,8 +194,8 @@ void vtk_append_double(const char *out_file_name, const char *var_name, int star
     if ( fclose(fp) ) fprintf(stderr, "Failed to close %s", out_file_name);
 }
 
-void vtk_append_integer(const char *out_file_name, const char *var_name, int start_index,
-                        int end_index, int *values) {
+void vtk_append_integer(const char *out_file_name, const char *var_name, 
+                        int start_index, int end_index, int *values) {
     int i;
     FILE *fp = NULL;
 
@@ -194,8 +206,10 @@ void vtk_append_integer(const char *out_file_name, const char *var_name, int sta
     }
 
     /*
-     * The first line gives the name of the dataset (variable) and its type (here "INT")
-     * The second line selects the color table to use and it is usually "LOOKUP_TABLE default".
+     * The first line gives the name of the dataset (variable) and its type 
+     * (here "INT")
+     * The second line selects the color table to use and it is usually 
+     * "LOOKUP_TABLE default".
      * The following lines contain a value of the dataset per line
      */
     fprintf(fp, "SCALARS %s INT\n", var_name);

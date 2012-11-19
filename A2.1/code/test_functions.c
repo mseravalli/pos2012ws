@@ -5,8 +5,8 @@
  * @author V. Petkov
  */
 
-int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index, int num_elems,
-                      double *cgup) {
+int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index, 
+                      int num_elems, double *cgup) {
     // Return an error if not implemented
     return -1;
 }

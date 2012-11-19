@@ -7,11 +7,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "mpi.h"
 
 #include "util_read_files.h"
 #include "initialization.h"
 
-int partition(char* part_type, 
+int dual_partition(char* part_type, 
               int elems_count, int points_count, 
               int* elems,
               idx_t ncommon, idx_t nparts,
@@ -21,8 +23,8 @@ int partition(char* part_type,
     idx_t ne = elems_count;
     idx_t nn = points_count;
 
-    idx_t* eptr = malloc((ne + 2) * sizeof(idx_t));
-    idx_t* eind = malloc((ne + 1) * 8 * sizeof(idx_t));
+    idx_t* eptr = malloc((ne + 1) * sizeof(idx_t));
+    idx_t* eind = malloc(ne * 8 * sizeof(idx_t));
     idx_t* vwgt = NULL;
     idx_t* vsize = NULL;
     real_t* tpwgts = NULL;
@@ -33,14 +35,12 @@ int partition(char* part_type,
     *npart = malloc(nn * sizeof(idx_t));
 
     // init eprt and eind
-    for (int i = 0; i < ne + 2; ++i) {
+    for (int i = 0; i < ne + 1; ++i) {
         eptr[i] = (idx_t) (i * 8);
     }
-    for (int i = 0; i < (ne + 1) * 8; ++i) {
+    for (int i = 0; i < ne * 8; ++i) {
         eind[i] = (idx_t) elems[i];
     }
-
-    printf("call the metis function\n");
     
     result = METIS_PartMeshDual(&ne, &nn,
                                 eptr, eind,
@@ -51,7 +51,7 @@ int partition(char* part_type,
 
     switch(result) {
         case METIS_OK:
-            printf("partitined correctly\n");
+            // printf("partitined correctly\n");
             result = 0;
             break;
         case METIS_ERROR_INPUT:
@@ -66,8 +66,47 @@ int partition(char* part_type,
         default:
             break;
     }
-    
-    fflush(stdout);
+
+    free(eptr);
+    free(eind);
+
+    return result;
+}
+
+int classical_partition(char* part_type, 
+                        int elems_count, int points_count, 
+                        int* elems,
+                        idx_t ncommon, idx_t nparts,
+                        idx_t* objval, idx_t** epart, idx_t** npart) {
+    int result = 0;
+
+    return result;
+}
+
+int map_local_global(int elems_count, idx_t* epart, int** local_global) {
+    int result = 0;
+
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int local_elems = 0;
+    for (int i = 0; i < elems_count; ++i) {
+        if (epart[i] == rank) {
+            local_elems++;
+        }
+    }
+
+    /** 
+     * the local_global array will reference the position
+     * of the current element within the elems array
+     */
+    *local_global = malloc(local_elems * sizeof(int));
+    for (int i = 0, j = 0; i < elems_count; ++i) {
+        if (epart[i] == rank) {
+            (*local_global)[j] = i * 8;
+            ++j;
+        }
+    }
 
     return result;
 }
@@ -92,8 +131,6 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
     *cgup = (double*) calloc(sizeof(double), (*nextcf + 1));
     *oc = (double*) calloc(sizeof(double), (*nintcf + 1));
     *cnorm = (double*) calloc(sizeof(double), (*nintcf + 1));
-
-    
 
     // initialize the arrays
     for ( i = 0; i <= 10; i++ ) {
@@ -120,14 +157,35 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
     for ( i = (*nintci); i <= (*nintcf); i++ )
         (*cgup)[i] = 1.0 / ((*bp)[i]);
 
+    /** Partition data */
+
+    int part_result = -1;
     idx_t ncommon = 4;
     idx_t nparts = 6;
-    int part_result = partition(part_type, 
-                               (*nintcf - *nintci), *points_count, 
-                               *elems,
-                               ncommon, nparts,
-                               objval, epart, npart);
 
-    return part_result;
+    int elems_count = (*nintcf - *nintci);
+    
+    if (strcmp(part_type, "dual") == 0) {
+        part_result = dual_partition(part_type, 
+                                     elems_count, *points_count, 
+                                     *elems,
+                                     ncommon, nparts,
+                                     objval, epart, npart);
+    } else {
+        part_result = classical_partition(part_type, 
+                                          elems_count, *points_count, 
+                                          *elems,
+                                          ncommon, nparts,
+                                          objval, epart, npart);
+    }
+
+    if (part_result != 0) {
+        printf("partition failed\n");
+        return -1;
+    }
+
+    map_local_global(elems_count, *epart, local_global_index);
+
+    return 0;
 }
 
