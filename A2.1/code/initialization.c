@@ -18,37 +18,38 @@ int partition(char* part_type,
               idx_t** objval, idx_t** epart, idx_t** npart) {
     int result = METIS_OK;
 
-    //idx_t ne = elems_count;
-    //idx_t nn = points_count;
+    idx_t ne = elems_count;
+    idx_t nn = points_count;
 
-    //idx_t* eptr = malloc((ne + 2) * sizeof(idx_t));
-    //idx_t* eind = malloc((ne + 1) * 8 * sizeof(idx_t));
-    //idx_t* vwgt = NULL;
-    //idx_t* vsize = NULL;
-    //real_t* tpwgts = NULL;
-    //idx_t options[METIS_NOPTIONS];
+    idx_t* eptr = malloc((ne + 2) * sizeof(idx_t));
+    idx_t* eind = malloc((ne + 1) * 8 * sizeof(idx_t));
+    idx_t* vwgt = NULL;
+    idx_t* vsize = NULL;
+    real_t* tpwgts = NULL;
+    idx_t options[METIS_NOPTIONS];
+    METIS_SetDefaultOptions(options);
 
-    //*epart = malloc(ne * sizeof(int));
-    //*npart = malloc(nn * sizeof(int));
+    *epart = malloc(ne * sizeof(idx_t));
+    *npart = malloc(nn * sizeof(idx_t));
 
-    //// init eprt and eind
-    //for (int i = 0; i < ne + 2; ++i) {
-    //    eptr[i] = (idx_t) (i * 8);
-    //}
-    //for (int i = 0; i < (ne + 1) * 8; ++i) {
-    //    eptr[i] = (idx_t) elems[i];
-    //}
+    // init eprt and eind
+    for (int i = 0; i < ne + 2; ++i) {
+        eptr[i] = (idx_t) (i * 8);
+    }
+    for (int i = 0; i < (ne + 1) * 8; ++i) {
+        eind[i] = (idx_t) elems[i];
+    }
+
+    idx_t o_val = 0;
 
     printf("call the metis function\n");
     
-    //METIS_SetDefaultOptions(options);
-    
-    //result = METIS_PartMeshDual(&ne, &nn,
-    //                            eptr, eind,
-    //                            vwgt, vsize,
-    //                            &ncommon, &nparts,
-    //                            tpwgts, options,
-    //                            *objval, *epart, *npart);
+    result = METIS_PartMeshDual(&ne, &nn,
+                                eptr, eind,
+                                vwgt, vsize,
+                                &ncommon, &nparts,
+                                tpwgts, options,
+                                &o_val, *epart, *npart);
 
     switch(result) {
         case METIS_OK:
@@ -122,7 +123,7 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
         (*cgup)[i] = 1.0 / ((*bp)[i]);
 
     idx_t ncommon = 4;
-    idx_t nparts = 2;
+    idx_t nparts = 6;
     int part_result = partition(part_type, 
                                (*nintcf - *nintci), *points_count, 
                                *elems,
