@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     /** Metis Results */
     idx_t* epart;     /// partition vector for the elements of the mesh
     idx_t* npart;     /// partition vector for the points (nodes) of the mesh
-    idx_t* objval;    /// resulting edgecut of total communication volume (classical distrib->zeros)
+    idx_t objval;    /// resulting edgecut of total communication volume (classical distrib->zeros)
 
     MPI_Init(&argc, &argv);    /// Start MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);    /// Get current process id

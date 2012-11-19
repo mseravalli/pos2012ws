@@ -15,7 +15,7 @@ int partition(char* part_type,
               int elems_count, int points_count, 
               int* elems,
               idx_t ncommon, idx_t nparts,
-              idx_t** objval, idx_t** epart, idx_t** npart) {
+              idx_t* objval, idx_t** epart, idx_t** npart) {
     int result = METIS_OK;
 
     idx_t ne = elems_count;
@@ -40,8 +40,6 @@ int partition(char* part_type,
         eind[i] = (idx_t) elems[i];
     }
 
-    idx_t o_val = 0;
-
     printf("call the metis function\n");
     
     result = METIS_PartMeshDual(&ne, &nn,
@@ -49,7 +47,7 @@ int partition(char* part_type,
                                 vwgt, vsize,
                                 &ncommon, &nparts,
                                 tpwgts, options,
-                                &o_val, *epart, *npart);
+                                objval, *epart, *npart);
 
     switch(result) {
         case METIS_OK:
@@ -80,7 +78,7 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
                    int*** points, int** elems, double** var, double** cgup, double** oc,
                    double** cnorm, int** local_global_index, int** global_local_index,
                    int* neighbors_count, int** send_count, int*** send_list, int** recv_count,
-                   int*** recv_list, idx_t** epart, idx_t** npart, idx_t** objval) {
+                   int*** recv_list, idx_t** epart, idx_t** npart, idx_t* objval) {
     /********** START INITIALIZATION **********/
     int i = 0;
     // read-in the input file
