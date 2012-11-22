@@ -46,7 +46,7 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     }
 
     for (int i = 0; i < num_elems; ++i) {
-        distr[local_global_index[i] / 8] = cgup_local[local_global_index[i] / 8];
+        distr[local_global_index[i]] = cgup_local[local_global_index[i]];
     }  
 
     // write the result to a vtk file

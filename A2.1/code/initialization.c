@@ -65,6 +65,17 @@ int classical_partition(char* part_type,
                         idx_t ncommon, idx_t nparts,
                         idx_t* objval, idx_t** epart, idx_t** npart) {
     int result = 0;
+    idx_t ne = elems_count;
+    idx_t nn = points_count;
+
+    *epart = malloc(ne * sizeof(idx_t));
+    *npart = malloc(nn * sizeof(idx_t));
+
+    for (int i = 0; i < ne; ++i) {
+        (*epart)[i] = i % nparts; 
+    }
+
+    // TODO: implement the distribution of the points?
 
     return result;
 }
@@ -85,12 +96,12 @@ int map_local_global(int elems_count, idx_t* epart, int** local_global,
 
     /** 
      * the local_global array will reference the position
-     * of the current element within the elems array
+     * of the current element within the elems array / 8
      */
     *local_global = malloc((*local_elems) * sizeof(int));
     for (int i = 0, j = 0; i < elems_count; ++i) {
         if (epart[i] == rank) {
-            (*local_global)[j] = i * 8;
+            (*local_global)[j] = i;
             ++j;
         }
     }
