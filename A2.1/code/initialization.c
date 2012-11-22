@@ -49,22 +49,8 @@ int dual_partition(char* part_type,
                                 tpwgts, options,
                                 objval, *epart, *npart);
 
-    switch(result) {
-        case METIS_OK:
-            // printf("partitined correctly\n");
-            result = 0;
-            break;
-        case METIS_ERROR_INPUT:
-            printf("Metis input error \n");
-            break;
-        case METIS_ERROR_MEMORY:
-            printf("Metis memory error \n");
-            break;
-        case METIS_ERROR:
-            printf("Metis error \n");
-            break;
-        default:
-            break;
+    if (result == METIS_OK) {
+        result = 0;
     }
 
     free(eptr);
@@ -168,7 +154,7 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     idx_t nparts = (idx_t) size;
 
-    int elems_count = (*nintcf - *nintci);
+    int elems_count = (*nintcf - *nintci) + 1;
     
     if (strcmp(part_type, "dual") == 0) {
         part_result = dual_partition(part_type, 

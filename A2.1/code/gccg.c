@@ -95,9 +95,11 @@ int main(int argc, char *argv[]) {
     char file_vtk_out[256];
     sprintf(file_vtk_out, "%s_.vtk", out_prefix);
 
-    // Implement this function in test_functions.c and call it here
-    test_distribution(file_in, file_vtk_out, local_global_index, 
-                      local_elems, cgup); 
+    if (my_rank == 2) {
+      // Implement this function in test_functions.c and call it here
+      test_distribution(file_in, file_vtk_out, local_global_index, 
+                        local_elems, cgup); 
+    }
 
     // Implement this function in test_functions.c and call it here
     /*test_communication(file_in, file_vtk_out, local_global_index, num_elems,
@@ -113,8 +115,12 @@ int main(int argc, char *argv[]) {
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/
-    finalization(file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
-                 points, elems, var, cgup, su);
+    if (my_rank == 0 ) {
+        finalization(file_in, out_prefix, 
+                     total_iters, residual_ratio, nintci, nintcf, 
+                     points_count, points, elems, 
+                     var, cgup, su);
+    }
     /********** END FINALIZATION **********/
 
     free(cnorm);

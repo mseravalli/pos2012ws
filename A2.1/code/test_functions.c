@@ -4,15 +4,18 @@
  * @date 22-Oct-2012
  * @author V. Petkov
  */
+#include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
+
 #include "test_functions.h"
 #include "util_read_files.h"
 #include "util_write_files.h"
 
 int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index, 
                       int num_elems, double *cgup_local) {
-    // Return an error if not implemented
-    int result = -1;
+    // TODO: return proper values for the correct execution
+    int result = 0;
     
     int nintci, nintcf;
     int nextci, nextcf;
@@ -23,6 +26,8 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     int points_count;
     int** points;
     int* elems;
+
+    // initialize the elements
     result = read_binary_geo(file_in, 
                              &nintci, &nintcf, &nextci, &nextcf,
                              &lcc,
@@ -31,11 +36,25 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     
     if ( result != 0 ) return result;
 
-    double* distr = (double*) calloc(num_elems, sizeof(double));
+    // select the correct content to instert into distr
+    int elem_count = nintcf -nintci + 1; 
 
-    for (int i = 0; i < num_elems; ++i) {
+    double* distr = (double*) calloc(elem_count, sizeof(double));
+
+    for (int i = 0; i < elem_count; ++i) {
         distr[i] = 0.0;
     }
+
+    for (int i = 0; i < num_elems; ++i) {
+        distr[local_global_index[i] / 8] = cgup_local[local_global_index[i] / 8];
+    }  
+
+    // write the result to a vtk file
+    char file_out[100];
+    sprintf(file_out, "partition.vtk");
+    vtk_write_unstr_grid_header(file_in, file_out, nintci, nintcf, points_count, 
+                                points, elems);
+    vtk_append_double(file_out, "DISTRIBUTION", nintci, nintcf, distr);
 
     free(distr);
 
