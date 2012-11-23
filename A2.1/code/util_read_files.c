@@ -47,18 +47,33 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
     fread(NEXTCI, sizeof(int), 1, fp);
     fread(NEXTCF, sizeof(int), 1, fp);
 
-    // allocating LCC
-    if ( (*LCC = (int**) malloc((*NINTCF + 1) * sizeof(int*))) == NULL ) {
+    // allocating LCC as a vector pointing to another single vector
+    // in this case the memory inspection is easier
+    *LCC        = (int**) malloc((*NINTCF + 1) * sizeof(int*));
+    int* matrix = (int*)  malloc((*NINTCF + 1) * 6 * sizeof(int));
+    
+    if (*LCC == NULL || matrix == NULL) {
         fprintf(stderr, "malloc failed to allocate first dimension of LCC");
         return -1;
     }
 
-    for ( i = 0; i < *NINTCF + 1; i++ ) {
-        if ( ((*LCC)[i] = (int *) malloc(6 * sizeof(int))) == NULL ) {
-            fprintf(stderr, "malloc failed to allocate second dimension of LCC\n");
-            return -1;
-        }
+    (*LCC)[0] = matrix;
+    for (i = 1; i < *NINTCF + 1; ++i) {
+        (*LCC)[i] = (*LCC)[i-1] + 6;
     }
+
+
+//  if ( (*LCC = (int**) malloc((*NINTCF + 1) * sizeof(int*))) == NULL ) {
+//      fprintf(stderr, "malloc failed to allocate first dimension of LCC");
+//      return -1;
+//  }
+//
+//  for ( i = 0; i < *NINTCF + 1; i++ ) {
+//      if ( ((*LCC)[i] = (int *) malloc(6 * sizeof(int))) == NULL ) {
+//          fprintf(stderr, "malloc failed to allocate second dimension of LCC\n");
+//          return -1;
+//      }
+//  }
 
     // start reading LCC
     // Note that C array index starts from 0 while Fortran starts from 1!
