@@ -8,6 +8,7 @@
 #include "stdlib.h"
 #include "string.h"
 
+#include "initialization.h"
 #include "test_functions.h"
 #include "util_read_files.h"
 #include "util_write_files.h"
@@ -61,11 +62,20 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     return result;
 }
 
-int test_communication(char *file_in, char *file_vtk_out, int *local_global_index, int *num_elems,
-                       int neighbors_count, int* send_count, int** send_list, int* recv_count,
-                       int** recv_list) {
-    // Return an error if not implemented
-    return -1;
+int test_communication(char* file_in, char* file_vtk_out, int* local_global_index,
+                       int* num_elems, int neighbors_count, 
+                       int* send_count, int** send_list, 
+                       int* recv_count, int** recv_list) {
+    // TODO: return the appropriate values
+    int result = 0;
+
+    int* commlist = (int*) malloc((*num_elems) * sizeof(int));
+    
+    for (int i = 0; i < (*num_elems); ++i) {
+        commlist[i] = 0;
+    }
+
+    return result;
 }
 
 

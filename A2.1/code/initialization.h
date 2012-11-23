@@ -18,5 +18,9 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
                    int*** recv_list, idx_t** epart, idx_t** npart, idx_t* objval,
                    int* local_elems);
 
+int init_commlist(int local_elems, int* local_global_index, // in, in
+                  int elems_count, idx_t* epart, int** lcc, // in, in, in
+                  int** commlist);                        // out
+
 #endif /* INITIALIZATION_H_ */
 

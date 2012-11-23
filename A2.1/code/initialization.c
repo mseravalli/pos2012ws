@@ -109,6 +109,49 @@ int map_local_global(int elems_count, idx_t* epart, int** local_global,
     return result;
 }
 
+/**
+ * Initialize the communication list. The communication list will be used
+ * subsequently for creating the proper send and receive list
+ */
+int init_commlist(int local_elems, int* local_global_index, // in, in
+                  int elems_count, idx_t* epart, int** lcc, // in, in, in
+                  int** commlist) {                        // out
+    int result = 0;
+    int my_rank = -1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+    // init commlist to 0
+    *commlist = (int*) malloc(elems_count * sizeof(int));
+    for (int i = 0; i < elems_count; ++i) {
+        (*commlist)[i] = 0;
+    }
+
+    int e = -1;
+    int neighbours = 0;
+    for (int i = 0; i < local_elems; ++i) {
+        e = local_global_index[i];
+        /**
+         * see what cells need to be received and sent
+         * if a cell has a neighbour, the neighbour has to be received
+         * if a cell has a neighbour, the cell has to be sent
+         */
+        for (int j = 0; j < 6; ++j) { 
+            if (epart[lcc[e][j]] != my_rank) {
+                (*commlist)[lcc[e][j]] = 5;
+                (*commlist)[e] = 10;
+                ++neighbours;
+            }
+        }
+        // if there are not external neighbours the cell is an internal cell
+        if (neighbours == 0) {
+            (*commlist)[e] = 15;
+        }
+        neighbours = 0;
+    }
+
+    return result;
+}
+
 int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int* nextci,
                    int* nextcf, int*** lcc, double** bs, double** be, double** bn, double** bw,
                    double** bl, double** bh, double** bp, double** su, int* points_count,
@@ -187,6 +230,11 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
     }
 
     map_local_global(elems_count, *epart, local_global_index, local_elems);
+
+    int* commlist = NULL;    
+//  init_commlist(*local_elems, *local_global_index,
+//              elems_count, *epart, *lcc,
+//              &commlist);
 
     return 0;
 }
