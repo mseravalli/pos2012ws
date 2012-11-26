@@ -130,11 +130,13 @@ int init_commlist(int local_elems, int* local_global_index, // in, in
     // keep track of what partitions are my neighbours
     int size = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    int* is_nbr = calloc(size, sizeof(int));
+
+    *send_count = calloc(size, sizeof(int));
+    *recv_count = calloc(size, sizeof(int));
     for (int i = 0; i < size; ++i) {
-        is_nbr[i] = 0;
+        (*send_count)[i] = 0;
+        (*recv_count)[i] = 0;
     }
-    *neighbors_count = 0;
 
     int e = -1;
     int local_nbr = 0;
@@ -151,13 +153,13 @@ int init_commlist(int local_elems, int* local_global_index, // in, in
             if (l < elems_count) {
                 int p = (int) epart[lcc[e][j]]; 
                 if (p != my_rank) {
-                    (*commlist)[lcc[e][j]] = RECV_ELEM;
+                    (*commlist)[l] = RECV_ELEM;
+                    ++((*recv_count)[epart[l]]);
+
                     (*commlist)[e] = SEND_ELEM;
+                    ++((*send_count)[epart[l]]);
+
                     ++local_nbr;
-                    if (!is_nbr[p]) {
-                        ++(*neighbors_count);
-                        is_nbr[p] = 1;
-                    }
                 }
             }
         }
@@ -168,24 +170,13 @@ int init_commlist(int local_elems, int* local_global_index, // in, in
         local_nbr = 0;
     }
 
-    *send_count = calloc(size, sizeof(int));
-    *recv_count = calloc(size, sizeof(int));
+    // count neighbours
+    (*neighbors_count) = 0;
     for (int i = 0; i < size; ++i) {
-        (*send_count)[i] = 0;
-        (*recv_count)[i] = 0;
-    }
-    
-    // count the elements that should be sent/recv to/from a proc
-    for (int i = 0; i < elems_count; ++i) {
-//      if ((*commlist)[j] == SEND_ELEM && epart[j] == my_rank) {
-//          ++((*send_count)[i]);
-//      }
-        if ((*commlist)[i] == RECV_ELEM && is_nbr[epart[i]]) {
-            ++((*recv_count)[epart[i]]);
+        if ((*send_count)[i] > 0) {
+            ++(*neighbors_count);
         }
     }
-
-    free(is_nbr);
     
     return result;
 }
