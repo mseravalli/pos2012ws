@@ -9,6 +9,10 @@
 #define INITIALIZATION_H_
 #include "metis.h"
 
+#define RECV_ELEM  5
+#define SEND_ELEM  10
+#define INNER_ELEM 15
+
 int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int* nextci,
                    int* nextcf, int*** lcc, double** bs, double** be, double** bn, double** bw,
                    double** bl, double** bh, double** bp, double** su, int* points_count,
@@ -20,7 +24,8 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
 
 int init_commlist(int local_elems, int* local_global_index, // in, in
                   int elems_count, idx_t* epart, int** lcc, // in, in, in
-                  int** commlist);                        // out
+                  int** commlist, int* neighbors_count,     // out, out
+                  int** send_count, int** recv_count);      // out, out
 
 #endif /* INITIALIZATION_H_ */
 

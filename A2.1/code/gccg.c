@@ -39,9 +39,10 @@ int main(int argc, char *argv[]) {
     double *cgup, *oc, *cnorm;
 
     /** Geometry data */
-    int points_count;    /// total number of points that define the geometry
-    int** points;    /// coordinates of the points that define the cells - size [points_cnt][3]
-    int* elems;    /// definition of the cells using their nodes (points) - each cell has 8 points
+    int points_count; /// total number of points that define the geometry
+    int** points;     /// coordinates of the points that define the cells - size [points_cnt][3]
+    int* elems;       /// definition of the cells using their nodes (points)
+                      /// each cell has 8 points
 
     /** Mapping between local and remote cell indices */
     int local_elems;
@@ -59,7 +60,8 @@ int main(int argc, char *argv[]) {
     /** Metis Results */
     idx_t* epart;     /// partition vector for the elements of the mesh
     idx_t* npart;     /// partition vector for the points (nodes) of the mesh
-    idx_t objval;    /// resulting edgecut of total communication volume (classical distrib->zeros)
+    idx_t objval = 0; /// resulting edgecut of total communication volume 
+                      /// (classical distrib->zeros)
 
     MPI_Init(&argc, &argv);    /// Start MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);    /// Get current process id
@@ -148,6 +150,9 @@ int main(int argc, char *argv[]) {
     free(epart);
     free(npart);
     free(local_global_index);
+
+    free(send_count);
+    free(recv_count);
 
     MPI_Finalize();    /// Cleanup MPI
 

@@ -115,7 +115,8 @@ int map_local_global(int elems_count, idx_t* epart, int** local_global,
  */
 int init_commlist(int local_elems, int* local_global_index, // in, in
                   int elems_count, idx_t* epart, int** lcc, // in, in, in
-                  int** commlist) {                        // out
+                  int** commlist, int* neighbors_count,     // out, out
+                  int** send_count, int** recv_count) {     // out, out
     int result = 0;
     int my_rank = -1;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -126,29 +127,66 @@ int init_commlist(int local_elems, int* local_global_index, // in, in
         (*commlist)[i] = 0;
     }
 
+    // keep track of what partitions are my neighbours
+    int size = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    int* is_nbr = calloc(size, sizeof(int));
+    for (int i = 0; i < size; ++i) {
+        is_nbr[i] = 0;
+    }
+    *neighbors_count = 0;
+
     int e = -1;
-    int neighbours = 0;
+    int local_nbr = 0;
     for (int i = 0; i < local_elems; ++i) {
         e = local_global_index[i];
         /**
          * see what cells need to be received and sent
          * if a cell has a neighbour, the neighbour has to be received
          * if a cell has a neighbour, the cell has to be sent
+         * exclude the external cells
          */
         for (int j = 0; j < 6; ++j) { 
-            if (epart[lcc[e][j]] != my_rank) {
-                (*commlist)[lcc[e][j]] = 5;
-                (*commlist)[e] = 10;
-                ++neighbours;
+            int l = lcc[e][j];
+            if (l < elems_count) {
+                int p = (int) epart[lcc[e][j]]; 
+                if (p != my_rank) {
+                    (*commlist)[lcc[e][j]] = RECV_ELEM;
+                    (*commlist)[e] = SEND_ELEM;
+                    ++local_nbr;
+                    if (!is_nbr[p]) {
+                        ++(*neighbors_count);
+                        is_nbr[p] = 1;
+                    }
+                }
             }
         }
         // if there are not external neighbours the cell is an internal cell
-        if (neighbours == 0) {
-            (*commlist)[e] = 15;
+        if (local_nbr == 0) {
+            (*commlist)[e] = INNER_ELEM;
         }
-        neighbours = 0;
+        local_nbr = 0;
     }
 
+    *send_count = calloc(size, sizeof(int));
+    *recv_count = calloc(size, sizeof(int));
+    for (int i = 0; i < size; ++i) {
+        (*send_count)[i] = 0;
+        (*recv_count)[i] = 0;
+    }
+    
+    // count the elements that should be sent/recv to/from a proc
+    for (int i = 0; i < elems_count; ++i) {
+//      if ((*commlist)[j] == SEND_ELEM && epart[j] == my_rank) {
+//          ++((*send_count)[i]);
+//      }
+        if ((*commlist)[i] == RECV_ELEM && is_nbr[epart[i]]) {
+            ++((*recv_count)[epart[i]]);
+        }
+    }
+
+    free(is_nbr);
+    
     return result;
 }
 
@@ -229,12 +267,17 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
         return -1;
     }
 
+    /** set up communication */
+
     map_local_global(elems_count, *epart, local_global_index, local_elems);
 
     int* commlist = NULL;    
-//  init_commlist(*local_elems, *local_global_index,
-//              elems_count, *epart, *lcc,
-//              &commlist);
+    init_commlist(*local_elems, *local_global_index,
+                  elems_count, *epart, *lcc,
+                  &commlist, neighbors_count,
+                  send_count, recv_count);
+
+    free(commlist);
 
     return 0;
 }

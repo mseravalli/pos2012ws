@@ -57,9 +57,9 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
         return -1;
     }
 
-    (*LCC)[0] = matrix;
-    for (i = 1; i < *NINTCF + 1; ++i) {
-        (*LCC)[i] = (*LCC)[i-1] + 6;
+    //(*LCC)[0] = matrix;
+    for (i = 0; i < *NINTCF + 1; ++i) {
+        (*LCC)[i] = &(matrix[i * 6]);
     }
 
 
