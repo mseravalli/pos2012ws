@@ -244,22 +244,17 @@ int initialization(char* file_in, char* part_type,
     map_local_global(elems_count, *epart, local_global_index, local_elems);
 
     // initialize the arrays
-    *var = (double*) calloc(sizeof(double), (*nextcf + 1));
-    *cgup = (double*) calloc(sizeof(double), (*nextcf + 1));
-    *oc = (double*) calloc(sizeof(double), (*nintcf + 1));
-    *cnorm = (double*) calloc(sizeof(double), (*nintcf + 1));
+    *var = (double*) calloc(sizeof(double), (*local_elems));
+    *cgup = (double*) calloc(sizeof(double), (*local_elems));
+    *oc = (double*) calloc(sizeof(double), (*local_elems));
+    *cnorm = (double*) calloc(sizeof(double), (*local_elems));
 
-    for ( i = 0; i <= 10; i++ ) {
+    for (i = 0; i <= 10; i++) {
         (*oc)[i] = 0.0;
         (*cnorm)[i] = 1.0;
     }
 
-    for ( i = (*nintci); i <= (*nintcf); i++ ) {
-        (*cgup)[i] = 0.0;
-        (*var)[i] = 0.0;
-    }
-
-    for ( i = (*nextci); i <= (*nextcf); i++ ) {
+    for (i = 0; i < (*local_elems); i++) {
         (*var)[i] = 0.0;
         (*cgup)[i] = 0.0;
         (*bs)[i] = 0.0;
@@ -270,8 +265,9 @@ int initialization(char* file_in, char* part_type,
         (*bh)[i] = 0.0;
     }
 
-    for ( i = (*nintci); i <= (*nintcf); i++ )
-        (*cgup)[i] = 1.0 / ((*bp)[i]);
+    for (i = 0; i < (*local_elems); i++) {
+        (*cgup)[i] = 1.0 / ((*bp)[(*local_global_index)[i]]);
+    }
 
 
     /** set up communication */
