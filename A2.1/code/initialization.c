@@ -184,14 +184,20 @@ int init_commlist(int local_elems, int* local_global_index, // in, in
     return result;
 }
 
-int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int* nextci,
-                   int* nextcf, int*** lcc, double** bs, double** be, double** bn, double** bw,
-                   double** bl, double** bh, double** bp, double** su, int* points_count,
-                   int*** points, int** elems, double** var, double** cgup, double** oc,
-                   double** cnorm, int** local_global_index, int** global_local_index,
-                   int* neighbors_count, int** send_count, int*** send_list, int** recv_count,
-                   int*** recv_list, idx_t** epart, idx_t** npart, idx_t* objval, 
-                   int* local_elems ) {
+int initialization(char* file_in, char* part_type, 
+                   int* nintci, int* nintcf, int* nextci, int* nextcf, 
+                   int*** lcc, 
+                   double** bs, double** be, double** bn, double** bw,
+                   double** bl, double** bh, double** bp, double** su, 
+                   int* points_count, int*** points, 
+                   int** elems, 
+                   double** var, double** cgup, double** oc, double** cnorm, 
+                   int** local_global_index, int** global_local_index,
+                   int* neighbors_count, 
+                   int** send_count, int*** send_list, 
+                   int** recv_count, int*** recv_list, 
+                   idx_t** epart, idx_t** npart, idx_t* objval, int* local_elems) {
+
     /********** START INITIALIZATION **********/
     int i = 0;
     // read-in the input file
@@ -200,36 +206,6 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
                                    &*points, &*elems);
 
     if ( f_status != 0 ) return f_status;
-
-    *var = (double*) calloc(sizeof(double), (*nextcf + 1));
-    *cgup = (double*) calloc(sizeof(double), (*nextcf + 1));
-    *oc = (double*) calloc(sizeof(double), (*nintcf + 1));
-    *cnorm = (double*) calloc(sizeof(double), (*nintcf + 1));
-
-    // initialize the arrays
-    for ( i = 0; i <= 10; i++ ) {
-        (*oc)[i] = 0.0;
-        (*cnorm)[i] = 1.0;
-    }
-
-    for ( i = (*nintci); i <= (*nintcf); i++ ) {
-        (*cgup)[i] = 0.0;
-        (*var)[i] = 0.0;
-    }
-
-    for ( i = (*nextci); i <= (*nextcf); i++ ) {
-        (*var)[i] = 0.0;
-        (*cgup)[i] = 0.0;
-        (*bs)[i] = 0.0;
-        (*be)[i] = 0.0;
-        (*bn)[i] = 0.0;
-        (*bw)[i] = 0.0;
-        (*bl)[i] = 0.0;
-        (*bh)[i] = 0.0;
-    }
-
-    for ( i = (*nintci); i <= (*nintcf); i++ )
-        (*cgup)[i] = 1.0 / ((*bp)[i]);
 
     /** Partition data */
 
@@ -260,11 +236,45 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
         printf("partition failed\n");
         return -1;
     }
-
-    /** set up communication */
-
+    
+    *global_local_index = calloc(elems_count, sizeof(int));
+    for (int i = 0; i < elems_count; ++i) {
+        (*global_local_index)[i] = (*epart)[i];    
+    }
     map_local_global(elems_count, *epart, local_global_index, local_elems);
 
+    // initialize the arrays
+    *var = (double*) calloc(sizeof(double), (*nextcf + 1));
+    *cgup = (double*) calloc(sizeof(double), (*nextcf + 1));
+    *oc = (double*) calloc(sizeof(double), (*nintcf + 1));
+    *cnorm = (double*) calloc(sizeof(double), (*nintcf + 1));
+
+    for ( i = 0; i <= 10; i++ ) {
+        (*oc)[i] = 0.0;
+        (*cnorm)[i] = 1.0;
+    }
+
+    for ( i = (*nintci); i <= (*nintcf); i++ ) {
+        (*cgup)[i] = 0.0;
+        (*var)[i] = 0.0;
+    }
+
+    for ( i = (*nextci); i <= (*nextcf); i++ ) {
+        (*var)[i] = 0.0;
+        (*cgup)[i] = 0.0;
+        (*bs)[i] = 0.0;
+        (*be)[i] = 0.0;
+        (*bn)[i] = 0.0;
+        (*bw)[i] = 0.0;
+        (*bl)[i] = 0.0;
+        (*bh)[i] = 0.0;
+    }
+
+    for ( i = (*nintci); i <= (*nintcf); i++ )
+        (*cgup)[i] = 1.0 / ((*bp)[i]);
+
+
+    /** set up communication */
     int* commlist = NULL;    
     init_commlist(*local_elems, *local_global_index,
                   elems_count, *epart, *lcc,

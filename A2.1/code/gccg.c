@@ -150,6 +150,7 @@ int main(int argc, char *argv[]) {
     free(epart);
     free(npart);
     free(local_global_index);
+    free(global_local_index);
 
 //  free(send_count);
 //  free(recv_count);
