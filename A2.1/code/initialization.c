@@ -1,5 +1,6 @@
 /**
- * Initialization step - parse the input file, compute data distribution, initialize LOCAL computational arrays
+ * Initialization step - parse the input file, compute data distribution, 
+ * initialize LOCAL computational arrays
  *
  * @date 22-Oct-2012
  * @author V. Petkov
@@ -65,17 +66,19 @@ int classical_partition(char* part_type,
                         idx_t ncommon, idx_t nparts,
                         idx_t* objval, idx_t** epart, idx_t** npart) {
     int result = 0;
-    idx_t ne = elems_count;
-    idx_t nn = points_count;
 
-    *epart = malloc(ne * sizeof(idx_t));
-    *npart = malloc(nn * sizeof(idx_t));
+    *epart = malloc(elems_count * sizeof(idx_t));
+    *npart = malloc(points_count * sizeof(idx_t));
 
-    for (int i = 0; i < ne; ++i) {
-        (*epart)[i] = i % nparts; 
+    int elems_per_part = (int) elems_count / nparts;
+
+    for (int i = 0; i < elems_count; ++i) {
+        if ((i / elems_per_part) < nparts) {
+            (*epart)[i] = (i / elems_per_part); 
+        } else {
+            (*epart)[i] = nparts - 1; 
+        }
     }
-
-    // TODO: implement the distribution of the points?
 
     return result;
 }

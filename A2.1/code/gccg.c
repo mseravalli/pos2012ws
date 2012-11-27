@@ -151,8 +151,8 @@ int main(int argc, char *argv[]) {
     free(npart);
     free(local_global_index);
 
-    free(send_count);
-    free(recv_count);
+//  free(send_count);
+//  free(recv_count);
 
     MPI_Finalize();    /// Cleanup MPI
 
