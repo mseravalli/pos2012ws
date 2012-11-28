@@ -129,6 +129,69 @@ int classical_partition(char* part_type,
     return result;
 }
 
+int partition(char* file_in, char* part_type,
+              int* nintci, int* nintcf, int* nextci, int* nextcf,
+              int*** lcc,
+              double** bs, double** be, double** bn, double** bw,
+              double** bl, double** bh, double** bp, double** su,
+              int* points_count, int*** points,
+              int* elems_count, int** elems,
+              int** global_local_index,
+              idx_t** epart, idx_t** npart, idx_t* objval) {
+    // read-in the input file
+    int f_status = read_binary_geo(file_in,
+                                   &*nintci, &*nintcf, &*nextci, &*nextcf,
+                                   &*lcc,
+                                   &*bs, &*be, &*bn, &*bw,
+                                   &*bl, &*bh, &*bp, &*su,
+                                   &*points_count, &*points, &*elems);
+
+    if ( f_status != 0 ) return f_status;
+    int part_result = -1;
+
+    idx_t ncommon = 4;
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    idx_t nparts = (idx_t) size;
+
+    *elems_count = (*nintcf - *nintci) + 1;
+
+    if (strcmp(part_type, "dual") == 0) {
+        part_result = dual_partition(part_type,
+                                     *elems_count, *points_count,
+                                     *elems,
+                                     ncommon, nparts,
+                                     objval, epart, npart);
+    } else if (strcmp(part_type, "nodal") == 0) {
+        part_result = nodal_partition(part_type,
+                                      *elems_count, *points_count,
+                                      *elems,
+                                      ncommon, nparts,
+                                      objval, epart, npart);
+    } else {
+        part_result = classical_partition(part_type,
+                                          *elems_count, *points_count,
+                                          *elems,
+                                          ncommon, nparts,
+                                          objval, epart, npart);
+    }
+
+    if (part_result != 0) {
+        printf("partition failed\n");
+        return -1;
+    }
+
+    *global_local_index = calloc(*elems_count, sizeof(int));
+    for (int i = 0; i < *elems_count; ++i) {
+        (*global_local_index)[i] = (*epart)[i];
+    }
+
+    free(*epart);
+    free(*npart);
+
+    return part_result;
+}
+
 int map_local_global(int elems_count, int* global_local, int** local_global,
                      int* local_elems) {
     int result = 0;
@@ -252,57 +315,13 @@ int initialization(char* file_in, char* part_type,
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     /** Partition data start */
+    int part_res = -1;
     // perform partition only on proc 0
     if (my_rank == 0) {
-        // read-in the input file
-        int f_status = read_binary_geo(file_in,
-                                       &*nintci, &*nintcf, &*nextci, &*nextcf,
-                                       &*lcc, &*bs,
-                                       &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su,
-                                       &*points_count, &*points, &*elems);
-
-        if ( f_status != 0 ) return f_status;
-            int part_result = -1;
-
-        idx_t ncommon = 4;
-        int size;
-        MPI_Comm_size(MPI_COMM_WORLD, &size);
-        idx_t nparts = (idx_t) size;
-
-        elems_count = (*nintcf - *nintci) + 1;
-
-        if (strcmp(part_type, "dual") == 0) {
-            part_result = dual_partition(part_type,
-                                         elems_count, *points_count,
-                                         *elems,
-                                         ncommon, nparts,
-                                         objval, epart, npart);
-        } else if (strcmp(part_type, "nodal") == 0) {
-            part_result = nodal_partition(part_type,
-                                          elems_count, *points_count,
-                                          *elems,
-                                          ncommon, nparts,
-                                          objval, epart, npart);
-        } else {
-            part_result = classical_partition(part_type,
-                                              elems_count, *points_count,
-                                              *elems,
-                                              ncommon, nparts,
-                                              objval, epart, npart);
-        }
-
-        if (part_result != 0) {
-            printf("partition failed\n");
-            return -1;
-        }
-
-        *global_local_index = calloc(elems_count, sizeof(int));
-        for (int i = 0; i < elems_count; ++i) {
-            (*global_local_index)[i] = (*epart)[i];
-        }
-
-        free(*epart);
-        free(*npart);
+    part_res =  partition(file_in, part_type, nintci, nintcf, nextci, nextcf,
+                          lcc, bs, be, bn, bw, bl, bh, bp, su,
+                          points_count, points, &elems_count, elems,
+                          global_local_index, epart, npart, objval);
     }
 
     MPI_Bcast(&elems_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
