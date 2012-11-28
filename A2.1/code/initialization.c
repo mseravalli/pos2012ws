@@ -268,8 +268,8 @@ int initialization(char* file_in, char* part_type,
 
     // broadcast all the necessary arrays and if needed create the matrices
     MPI_Bcast(*global_local_index, elems_count, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*bp, elems_count, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*su, elems_count, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(*bp, elems_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(*su, elems_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     MPI_Bcast(*elems, elems_count * 8, MPI_INT, 0, MPI_COMM_WORLD);
 
