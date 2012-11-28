@@ -1,5 +1,5 @@
 /**
- * Initialization step - parse the input file, compute data distribution, 
+ * Initialization step - parse the input file, compute data distribution,
  * initialize LOCAL computational arrays
  *
  * @date 22-Oct-2012
@@ -14,8 +14,8 @@
 #include "util_read_files.h"
 #include "initialization.h"
 
-int dual_partition(char* part_type, 
-              int elems_count, int points_count, 
+int dual_partition(char* part_type,
+              int elems_count, int points_count,
               int* elems,
               idx_t ncommon, idx_t nparts,
               idx_t* objval, idx_t** epart, idx_t** npart) {
@@ -42,7 +42,7 @@ int dual_partition(char* part_type,
     for (int i = 0; i < ne * 8; ++i) {
         eind[i] = (idx_t) elems[i];
     }
-    
+
     result = METIS_PartMeshDual(&ne, &nn,
                                 eptr, eind,
                                 vwgt, vsize,
@@ -60,8 +60,8 @@ int dual_partition(char* part_type,
     return result;
 }
 
-int nodal_partition(char* part_type, 
-              int elems_count, int points_count, 
+int nodal_partition(char* part_type,
+              int elems_count, int points_count,
               int* elems,
               idx_t ncommon, idx_t nparts,
               idx_t* objval, idx_t** epart, idx_t** npart) {
@@ -88,7 +88,7 @@ int nodal_partition(char* part_type,
     for (int i = 0; i < ne * 8; ++i) {
         eind[i] = (idx_t) elems[i];
     }
-    
+
     result = METIS_PartMeshNodal(&ne, &nn,
                                  eptr, eind,
                                  vwgt, vsize,
@@ -106,8 +106,8 @@ int nodal_partition(char* part_type,
     return result;
 }
 
-int classical_partition(char* part_type, 
-                        int elems_count, int points_count, 
+int classical_partition(char* part_type,
+                        int elems_count, int points_count,
                         int* elems,
                         idx_t ncommon, idx_t nparts,
                         idx_t* objval, idx_t** epart, idx_t** npart) {
@@ -120,9 +120,9 @@ int classical_partition(char* part_type,
 
     for (int i = 0; i < elems_count; ++i) {
         if ((i / elems_per_part) < nparts) {
-            (*epart)[i] = (i / elems_per_part); 
+            (*epart)[i] = (i / elems_per_part);
         } else {
-            (*epart)[i] = nparts - 1; 
+            (*epart)[i] = nparts - 1;
         }
     }
 
@@ -143,7 +143,7 @@ int map_local_global(int elems_count, int* global_local, int** local_global,
         }
     }
 
-    /** 
+    /**
      * the local_global array will reference the position
      * of the current element within the elems array / 8
      */
@@ -162,10 +162,10 @@ int map_local_global(int elems_count, int* global_local, int** local_global,
  * Initialize the communication list. The communication list will be used
  * subsequently for creating the proper send and receive list
  */
-int init_commlist(int local_elems, int* local_global_index, // in, in
-                  int elems_count, int* global_local_index, int** lcc, // in, in, in
-                  int** commlist, int* neighbors_count,     // out, out
-                  int** send_count, int** recv_count) {     // out, out
+int init_commlist(int local_elems, int* local_global_index,  // i, i
+                  int elems_count, int* global_local_index, int** lcc,  // i,i,i
+                  int** commlist, int* neighbors_count,     // o, o
+                  int** send_count, int** recv_count) {     // o, o
     int result = 0;
     int my_rank = -1;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -197,10 +197,10 @@ int init_commlist(int local_elems, int* local_global_index, // in, in
          * if a cell has a neighbour, the cell has to be sent
          * exclude the external cells
          */
-        for (int j = 0; j < 6; ++j) { 
+        for (int j = 0; j < 6; ++j) {
             int l = lcc[e][j];
             if (l < elems_count) {
-                int p = (int) global_local_index[lcc[e][j]]; 
+                int p = (int) global_local_index[lcc[e][j]];
                 if (p != my_rank) {
                     (*commlist)[l] = RECV_ELEM;
                     ++((*recv_count)[global_local_index[l]]);
@@ -226,24 +226,24 @@ int init_commlist(int local_elems, int* local_global_index, // in, in
             ++(*neighbors_count);
         }
     }
-    
+
     return result;
 }
 
-int initialization(char* file_in, char* part_type, 
-                   int* nintci, int* nintcf, int* nextci, int* nextcf, 
-                   int*** lcc, 
+int initialization(char* file_in, char* part_type,
+                   int* nintci, int* nintcf, int* nextci, int* nextcf,
+                   int*** lcc,
                    double** bs, double** be, double** bn, double** bw,
-                   double** bl, double** bh, double** bp, double** su, 
-                   int* points_count, int*** points, 
-                   int** elems, 
-                   double** var, double** cgup, double** oc, double** cnorm, 
+                   double** bl, double** bh, double** bp, double** su,
+                   int* points_count, int*** points,
+                   int** elems,
+                   double** var, double** cgup, double** oc, double** cnorm,
                    int** local_global_index, int** global_local_index,
-                   int* neighbors_count, 
-                   int** send_count, int*** send_list, 
-                   int** recv_count, int*** recv_list, 
-                   idx_t** epart, idx_t** npart, idx_t* objval, int* local_elems) {
-
+                   int* neighbors_count,
+                   int** send_count, int*** send_list,
+                   int** recv_count, int*** recv_list,
+                   idx_t** epart, idx_t** npart, idx_t* objval,
+                   int* local_elems) {
     /********** START INITIALIZATION **********/
     int i = 0;
     int elems_count = 0;
@@ -255,9 +255,11 @@ int initialization(char* file_in, char* part_type,
     // perform partition only on proc 0
     if (my_rank == 0) {
         // read-in the input file
-        int f_status = read_binary_geo(file_in, &*nintci, &*nintcf, &*nextci, &*nextcf, &*lcc, &*bs,
-                                       &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su, &*points_count,
-                                       &*points, &*elems);
+        int f_status = read_binary_geo(file_in,
+                                       &*nintci, &*nintcf, &*nextci, &*nextcf,
+                                       &*lcc, &*bs,
+                                       &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su,
+                                       &*points_count, &*points, &*elems);
 
         if ( f_status != 0 ) return f_status;
             int part_result = -1;
@@ -268,22 +270,22 @@ int initialization(char* file_in, char* part_type,
         idx_t nparts = (idx_t) size;
 
         elems_count = (*nintcf - *nintci) + 1;
-        
+
         if (strcmp(part_type, "dual") == 0) {
-            part_result = dual_partition(part_type, 
-                                         elems_count, *points_count, 
+            part_result = dual_partition(part_type,
+                                         elems_count, *points_count,
                                          *elems,
                                          ncommon, nparts,
                                          objval, epart, npart);
         } else if (strcmp(part_type, "nodal") == 0) {
-            part_result = nodal_partition(part_type, 
-                                          elems_count, *points_count, 
+            part_result = nodal_partition(part_type,
+                                          elems_count, *points_count,
                                           *elems,
                                           ncommon, nparts,
                                           objval, epart, npart);
         } else {
-            part_result = classical_partition(part_type, 
-                                              elems_count, *points_count, 
+            part_result = classical_partition(part_type,
+                                              elems_count, *points_count,
                                               *elems,
                                               ncommon, nparts,
                                               objval, epart, npart);
@@ -293,10 +295,10 @@ int initialization(char* file_in, char* part_type,
             printf("partition failed\n");
             return -1;
         }
-        
+
         *global_local_index = calloc(elems_count, sizeof(int));
         for (int i = 0; i < elems_count; ++i) {
-            (*global_local_index)[i] = (*epart)[i];    
+            (*global_local_index)[i] = (*epart)[i];
         }
 
         free(*epart);
@@ -305,7 +307,7 @@ int initialization(char* file_in, char* part_type,
 
     MPI_Bcast(&elems_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(points_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    
+
     // init arrays before receiving them
     if (my_rank != 0) {
         *global_local_index = (int*) calloc(elems_count, sizeof(int));
@@ -329,13 +331,13 @@ int initialization(char* file_in, char* part_type,
     for (i = 0; i < elems_count; ++i) {
         (*lcc)[i] = &((**lcc)[i * 6]);
     }
-    
+
     MPI_Bcast(**points, *points_count * 3, MPI_INT, 0, MPI_COMM_WORLD);
     for (i = 0; i < *points_count; ++i) {
         (*points)[i] = &((**points)[i * 3]);
     }
 
-    map_local_global(elems_count, *global_local_index, 
+    map_local_global(elems_count, *global_local_index,
                      local_global_index, local_elems);
     /** Partition data end */
 
@@ -354,7 +356,7 @@ int initialization(char* file_in, char* part_type,
         free(*bh);
     }
 
-    double* tmp = NULL; 
+    double* tmp = NULL;
 
     // distribute bp vector
     tmp = (double*) calloc(*local_elems, sizeof(double));
@@ -400,9 +402,9 @@ int initialization(char* file_in, char* part_type,
     }
 
     /** set up communication */
-    int* commlist = NULL;    
+    int* commlist = NULL;
     init_commlist(*local_elems, *local_global_index,
-                  elems_count, *global_local_index, 
+                  elems_count, *global_local_index,
                   *lcc,
                   &commlist, neighbors_count,
                   send_count, recv_count);
