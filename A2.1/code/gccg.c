@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
     char *file_in = argv[1];
     char *out_prefix = argv[2];
-    char *part_type = (argc == 3 ? "classical" : argv[3]);
+    char *part_type = (argc == 3 ? "classic" : argv[3]);
 
     /********** START INITIALIZATION **********/
     // read-in the input file
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     }
 
     char file_vtk_out[256];
-    sprintf(file_vtk_out, "%s_.vtk", out_prefix);
+    sprintf(file_vtk_out, "%s_%s_proc%d.vtk", out_prefix, part_type, my_rank);
 
     if (my_rank == 3) {
       // Implement this function in test_functions.c and call it here

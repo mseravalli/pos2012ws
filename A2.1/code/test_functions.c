@@ -15,7 +15,6 @@
 
 int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index, 
                       int num_elems, double *cgup_local) {
-    // TODO: return proper values for the correct execution
     int result = 0;
     
     int nintci, nintcf;
@@ -51,11 +50,9 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     }  
 
     // write the result to a vtk file
-    char file_out[100];
-    sprintf(file_out, "partition.vtk");
-    vtk_write_unstr_grid_header(file_in, file_out, nintci, nintcf, points_count, 
-                                points, elems);
-    vtk_append_double(file_out, "DISTRIBUTION", nintci, nintcf, distr);
+    vtk_write_unstr_grid_header(file_in, file_vtk_out, nintci, nintcf, 
+                                points_count, points, elems);
+    vtk_append_double(file_vtk_out, "DISTRIBUTION", nintci, nintcf, distr);
 
     free(distr);
 
