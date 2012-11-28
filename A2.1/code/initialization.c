@@ -60,6 +60,52 @@ int dual_partition(char* part_type,
     return result;
 }
 
+int nodal_partition(char* part_type, 
+              int elems_count, int points_count, 
+              int* elems,
+              idx_t ncommon, idx_t nparts,
+              idx_t* objval, idx_t** epart, idx_t** npart) {
+    int result = METIS_OK;
+
+    idx_t ne = elems_count;
+    idx_t nn = points_count;
+
+    idx_t* eptr = malloc((ne + 1) * sizeof(idx_t));
+    idx_t* eind = malloc(ne * 8 * sizeof(idx_t));
+    idx_t* vwgt = NULL;
+    idx_t* vsize = NULL;
+    real_t* tpwgts = NULL;
+    idx_t options[METIS_NOPTIONS];
+    METIS_SetDefaultOptions(options);
+
+    *epart = malloc(ne * sizeof(idx_t));
+    *npart = malloc(nn * sizeof(idx_t));
+
+    // init eprt and eind
+    for (int i = 0; i < ne + 1; ++i) {
+        eptr[i] = (idx_t) (i * 8);
+    }
+    for (int i = 0; i < ne * 8; ++i) {
+        eind[i] = (idx_t) elems[i];
+    }
+    
+    result = METIS_PartMeshNodal(&ne, &nn,
+                                 eptr, eind,
+                                 vwgt, vsize,
+                                 &nparts,
+                                 tpwgts, options,
+                                 objval, *epart, *npart);
+
+    if (result == METIS_OK) {
+        result = 0;
+    }
+
+    free(eptr);
+    free(eind);
+
+    return result;
+}
+
 int classical_partition(char* part_type, 
                         int elems_count, int points_count, 
                         int* elems,
@@ -229,6 +275,12 @@ int initialization(char* file_in, char* part_type,
                                          *elems,
                                          ncommon, nparts,
                                          objval, epart, npart);
+        } else if (strcmp(part_type, "nodal") == 0) {
+            part_result = nodal_partition(part_type, 
+                                          elems_count, *points_count, 
+                                          *elems,
+                                          ncommon, nparts,
+                                          objval, epart, npart);
         } else {
             part_result = classical_partition(part_type, 
                                               elems_count, *points_count, 

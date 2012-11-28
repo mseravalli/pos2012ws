@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     double *bp;    /// Pole coefficient
     double *su;    /// Source values
 
-    double residual_ratio;    /// the ratio between the reference and the current residual
+    double residual_ratio = 100000; /// the ratio between the reference and the current residual
     double *var;    /// the variation vector -> keeps the result in the end
 
     /** Additional vectors required for the computation */
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
     char file_vtk_out[256];
     sprintf(file_vtk_out, "%s_.vtk", out_prefix);
 
-    if (my_rank == 2) {
+    if (my_rank == 3) {
       // Implement this function in test_functions.c and call it here
       test_distribution(file_in, file_vtk_out, local_global_index, 
                         local_elems, cgup); 
@@ -110,10 +110,11 @@ int main(int argc, char *argv[]) {
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
-//  int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
-//                                     be, bh, cnorm, var, su, cgup, &residual_ratio,
-//                                     local_global_index, global_local_index, neighbors_count,
-//                                     send_count, send_list, recv_count, recv_list);
+    int total_iters = 0;
+//  total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
+//                                 be, bh, cnorm, var, su, cgup, &residual_ratio,
+//                                 local_global_index, global_local_index, neighbors_count,
+//                                 send_count, send_list, recv_count, recv_list);
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/
