@@ -83,7 +83,7 @@ int classical_partition(char* part_type,
     return result;
 }
 
-int map_local_global(int elems_count, idx_t* epart, int** local_global,
+int map_local_global(int elems_count, int* global_local, int** local_global,
                      int* local_elems) {
     int result = 0;
 
@@ -92,7 +92,7 @@ int map_local_global(int elems_count, idx_t* epart, int** local_global,
 
     *local_elems = 0;
     for (int i = 0; i < elems_count; ++i) {
-        if (epart[i] == rank) {
+        if (global_local[i] == rank) {
             (*local_elems)++;
         }
     }
@@ -103,7 +103,7 @@ int map_local_global(int elems_count, idx_t* epart, int** local_global,
      */
     *local_global = malloc((*local_elems) * sizeof(int));
     for (int i = 0, j = 0; i < elems_count; ++i) {
-        if (epart[i] == rank) {
+        if (global_local[i] == rank) {
             (*local_global)[j] = i;
             ++j;
         }
@@ -117,7 +117,7 @@ int map_local_global(int elems_count, idx_t* epart, int** local_global,
  * subsequently for creating the proper send and receive list
  */
 int init_commlist(int local_elems, int* local_global_index, // in, in
-                  int elems_count, idx_t* epart, int** lcc, // in, in, in
+                  int elems_count, int* global_local_index, int** lcc, // in, in, in
                   int** commlist, int* neighbors_count,     // out, out
                   int** send_count, int** recv_count) {     // out, out
     int result = 0;
@@ -154,13 +154,13 @@ int init_commlist(int local_elems, int* local_global_index, // in, in
         for (int j = 0; j < 6; ++j) { 
             int l = lcc[e][j];
             if (l < elems_count) {
-                int p = (int) epart[lcc[e][j]]; 
+                int p = (int) global_local_index[lcc[e][j]]; 
                 if (p != my_rank) {
                     (*commlist)[l] = RECV_ELEM;
-                    ++((*recv_count)[epart[l]]);
+                    ++((*recv_count)[global_local_index[l]]);
 
                     (*commlist)[e] = SEND_ELEM;
-                    ++((*send_count)[epart[l]]);
+                    ++((*send_count)[global_local_index[l]]);
 
                     ++local_nbr;
                 }
@@ -200,54 +200,132 @@ int initialization(char* file_in, char* part_type,
 
     /********** START INITIALIZATION **********/
     int i = 0;
-    // read-in the input file
-    int f_status = read_binary_geo(file_in, &*nintci, &*nintcf, &*nextci, &*nextcf, &*lcc, &*bs,
-                                   &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su, &*points_count,
-                                   &*points, &*elems);
+    int elems_count = 0;
 
-    if ( f_status != 0 ) return f_status;
+    int my_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-    /** Partition data */
+    /** Partition data start */
+    // perform partition only on proc 0
+    if (my_rank == 0) {
+        // read-in the input file
+        int f_status = read_binary_geo(file_in, &*nintci, &*nintcf, &*nextci, &*nextcf, &*lcc, &*bs,
+                                       &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su, &*points_count,
+                                       &*points, &*elems);
 
-    int part_result = -1;
+        if ( f_status != 0 ) return f_status;
+            int part_result = -1;
 
-    idx_t ncommon = 4;
-    int size;
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    idx_t nparts = (idx_t) size;
+        idx_t ncommon = 4;
+        int size;
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+        idx_t nparts = (idx_t) size;
 
-    int elems_count = (*nintcf - *nintci) + 1;
+        elems_count = (*nintcf - *nintci) + 1;
+        
+        if (strcmp(part_type, "dual") == 0) {
+            part_result = dual_partition(part_type, 
+                                         elems_count, *points_count, 
+                                         *elems,
+                                         ncommon, nparts,
+                                         objval, epart, npart);
+        } else {
+            part_result = classical_partition(part_type, 
+                                              elems_count, *points_count, 
+                                              *elems,
+                                              ncommon, nparts,
+                                              objval, epart, npart);
+        }
+
+        if (part_result != 0) {
+            printf("partition failed\n");
+            return -1;
+        }
+        
+        *global_local_index = calloc(elems_count, sizeof(int));
+        for (int i = 0; i < elems_count; ++i) {
+            (*global_local_index)[i] = (*epart)[i];    
+        }
+
+        free(*epart);
+        free(*npart);
+    }
+
+    MPI_Bcast(&elems_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(points_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
     
-    if (strcmp(part_type, "dual") == 0) {
-        part_result = dual_partition(part_type, 
-                                     elems_count, *points_count, 
-                                     *elems,
-                                     ncommon, nparts,
-                                     objval, epart, npart);
-    } else {
-        part_result = classical_partition(part_type, 
-                                          elems_count, *points_count, 
-                                          *elems,
-                                          ncommon, nparts,
-                                          objval, epart, npart);
+    // init arrays before receiving them
+    if (my_rank != 0) {
+        *global_local_index = (int*) calloc(elems_count, sizeof(int));
+        *bp = (double*) calloc(elems_count, sizeof(double));
+        *su = (double*) calloc(elems_count, sizeof(double));
+        *elems = (int*) malloc(elems_count * 8 * sizeof(int));
+        *lcc  = (int**) malloc(elems_count * sizeof(int*));
+        **lcc = (int*)  malloc(elems_count * 6 * sizeof(int));
+        *points  = (int**) malloc(*points_count * sizeof(int*));
+        **points = (int*)  malloc(*points_count * 3 * sizeof(int));
     }
 
-    if (part_result != 0) {
-        printf("partition failed\n");
-        return -1;
+    // broadcast all the necessary arrays and if needed create the matrices
+    MPI_Bcast(*global_local_index, elems_count, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(*bp, elems_count, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(*su, elems_count, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Bcast(*elems, elems_count * 8, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Bcast(**lcc, elems_count * 6, MPI_INT, 0, MPI_COMM_WORLD);
+    for (i = 0; i < elems_count; ++i) {
+        (*lcc)[i] = &((**lcc)[i * 6]);
     }
     
-    *global_local_index = calloc(elems_count, sizeof(int));
-    for (int i = 0; i < elems_count; ++i) {
-        (*global_local_index)[i] = (*epart)[i];    
+    MPI_Bcast(**points, *points_count * 3, MPI_INT, 0, MPI_COMM_WORLD);
+    for (i = 0; i < *points_count; ++i) {
+        (*points)[i] = &((**points)[i * 3]);
     }
-    map_local_global(elems_count, *epart, local_global_index, local_elems);
+
+    map_local_global(elems_count, *global_local_index, 
+                     local_global_index, local_elems);
+    /** Partition data end */
 
     // initialize the arrays
-    *var = (double*) calloc(sizeof(double), (*local_elems));
-    *cgup = (double*) calloc(sizeof(double), (*local_elems));
-    *oc = (double*) calloc(sizeof(double), (*local_elems));
-    *cnorm = (double*) calloc(sizeof(double), (*local_elems));
+    *var =   (double*) calloc(*local_elems, sizeof(double));
+    *cgup =  (double*) calloc(*local_elems, sizeof(double));
+    *oc =    (double*) calloc(*local_elems, sizeof(double));
+    *cnorm = (double*) calloc(*local_elems, sizeof(double));
+
+    if (my_rank == 0) {
+        free(*bs);
+        free(*be);
+        free(*bn);
+        free(*bw);
+        free(*bl);
+        free(*bh);
+    }
+
+    double* tmp = NULL; 
+
+    // distribute bp vector
+    tmp = (double*) calloc(*local_elems, sizeof(double));
+    for (int i = 0; i < *local_elems; ++i) {
+        tmp[i] = ((*bp)[(*local_global_index)[i]]);
+    }
+    free(*bp);
+    *bp = tmp;
+
+    // distribute su vector
+    tmp = (double*) calloc(*local_elems, sizeof(double));
+    for (int i = 0; i < *local_elems; ++i) {
+        tmp[i] = ((*su)[(*local_global_index)[i]]);
+    }
+    free(*su);
+    *su = tmp;
+
+    *bs = (double*) calloc(*local_elems, sizeof(double));
+    *be = (double*) calloc(*local_elems, sizeof(double));
+    *bn = (double*) calloc(*local_elems, sizeof(double));
+    *bw = (double*) calloc(*local_elems, sizeof(double));
+    *bl = (double*) calloc(*local_elems, sizeof(double));
+    *bh = (double*) calloc(*local_elems, sizeof(double));
 
     for (i = 0; i <= 10; i++) {
         (*oc)[i] = 0.0;
@@ -266,14 +344,14 @@ int initialization(char* file_in, char* part_type,
     }
 
     for (i = 0; i < (*local_elems); i++) {
-        (*cgup)[i] = 1.0 / ((*bp)[(*local_global_index)[i]]);
+        (*cgup)[i] = 1.0 / ((*bp)[i]);
     }
-
 
     /** set up communication */
     int* commlist = NULL;    
     init_commlist(*local_elems, *local_global_index,
-                  elems_count, *epart, *lcc,
+                  elems_count, *global_local_index, 
+                  *lcc,
                   &commlist, neighbors_count,
                   send_count, recv_count);
 

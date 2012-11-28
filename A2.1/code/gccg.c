@@ -142,13 +142,9 @@ int main(int argc, char *argv[]) {
     free(lcc[0]);
     free(lcc);
 
-    for(int i = 0; i < points_count; i++) {
-        free(points[i]);
-    }
+    free(points[0]);
     free(points);
 
-    free(epart);
-    free(npart);
     free(local_global_index);
     free(global_local_index);
 

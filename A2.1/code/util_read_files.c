@@ -53,11 +53,9 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
     int* matrix = (int*)  malloc((*NINTCF + 1) * 6 * sizeof(int));
     
     if (*LCC == NULL || matrix == NULL) {
-        fprintf(stderr, "malloc failed to allocate first dimension of LCC");
+        fprintf(stderr, "malloc failed to allocate LCC");
         return -1;
     }
-
-    //(*LCC)[0] = matrix;
     for (i = 0; i < *NINTCF + 1; ++i) {
         (*LCC)[i] = &(matrix[i * 6]);
     }
@@ -154,17 +152,27 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
     fread(points_count, sizeof(int), 1, fp);
 
     // allocate points vec
-    if ( (*points = (int **) calloc(*points_count, sizeof(int*))) == NULL ) {
-        fprintf(stderr, "malloc() POINTS 1st dim. failed\n");
+    *points  = (int**) malloc(*points_count * sizeof(int*));
+    **points = (int*)  malloc(*points_count * 3 * sizeof(int));
+    if ( *points == NULL || **points == NULL) {
+        fprintf(stderr, "malloc failed to allocate POINTS\n");
         return -1;
     }
-
     for ( i = 0; i < *points_count; i++ ) {
-        if ( ((*points)[i] = (int *) calloc(3, sizeof(int))) == NULL ) {
-            fprintf(stderr, "malloc() POINTS 2nd dim. failed\n");
-            return -1;
-        }
+        (*points)[i] = &((**points)[i * 3]);
     }
+
+//  if ( (*points = (int **) calloc(*points_count, sizeof(int*))) == NULL ) {
+//      fprintf(stderr, "malloc() POINTS 1st dim. failed\n");
+//      return -1;
+//  }
+//
+//  for ( i = 0; i < *points_count; i++ ) {
+//      if ( ((*points)[i] = (int *) calloc(3, sizeof(int))) == NULL ) {
+//          fprintf(stderr, "malloc() POINTS 2nd dim. failed\n");
+//          return -1;
+//      }
+//  }
 
     int coordIdx;
     int pointIdx;
