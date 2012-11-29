@@ -30,11 +30,5 @@ int initialization(char* file_in, char* part_type,
                    int** recv_count, int*** recv_list, 
                    idx_t** epart, idx_t** npart, idx_t* objval, int* local_elems);
 
-int init_commlist(int local_elems, int* local_global_index, // in, in
-                  int elems_count, int* global_local_index, // in, in
-                  int** lcc,                                // in
-                  int** commlist, int* neighbors_count,     // out, out
-                  int** send_count, int** recv_count);      // out, out
-
 #endif /* INITIALIZATION_H_ */
 
