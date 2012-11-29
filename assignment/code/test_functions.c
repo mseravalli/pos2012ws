@@ -14,6 +14,10 @@
 #include "util_read_files.h"
 #include "util_write_files.h"
 
+#define RECV_ELEM  5
+#define SEND_ELEM  10
+#define INNER_ELEM 15
+
 int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index, 
                       int num_elems, double *cgup_local) {
     int result = 0;
@@ -93,11 +97,18 @@ int test_communication(char* file_in, char* file_vtk_out, int* local_global_inde
         commlist[i] = 0;
     }
 
+    for (int i = 0; i < *num_elems; ++i) {
+        commlist[local_global_index[i]] = INNER_ELEM;
+    }
+
     int size;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     for (int i = 0; i < size; ++i) {
         for (int j = 0; j < send_count[i]; ++j) {
             commlist[send_list[i][j]] = SEND_ELEM;
+        }
+        for (int j = 0; j < recv_count[i]; ++j) {
+            commlist[recv_list[i][j]] = RECV_ELEM;
         }
     }
 

@@ -279,14 +279,14 @@ int init_commlist(int el_int_loc, int* local_global_index,             // i, i
     *recv_list = (int**) malloc(size * sizeof(int*));
     for (int i = 0; i < size; ++i) {
         if ((*send_count)[i] > 0) {
-            **send_list = (int*) malloc((*send_count)[i] * sizeof(int));
+            (*send_list)[i] = (int*) malloc((*send_count)[i] * sizeof(int));
         } else {
-            **send_list = NULL;
+            (*send_list)[i] = NULL;
         }
         if ((*recv_count)[i] > 0) {
-            **recv_list = (int*) malloc((*send_count)[i] * sizeof(int));
+            (*recv_list)[i] = (int*) malloc((*recv_count)[i] * sizeof(int));
         } else {
-            **recv_list = NULL;
+            (*recv_list)[i] = NULL;
         }
     }
 
@@ -459,12 +459,12 @@ int initialization(char* file_in, char* part_type,
     /** Partition data end */
 
     /** set up communication */
-//  init_commlist(*el_int_loc, *local_global_index,
-//                el_int_tot, *global_local_index,
-//                *lcc,
-//                neighbors_count,
-//                send_count, send_list,
-//                recv_count, recv_list);
+    init_commlist(*el_int_loc, *local_global_index,
+                  el_int_tot, *global_local_index,
+                  *lcc,
+                  neighbors_count,
+                  send_count, send_list,
+                  recv_count, recv_list);
 
     return 0;
 }

@@ -9,13 +9,6 @@
 #define INITIALIZATION_H_
 #include "metis.h"
 
-#define RECV_ELEM  5
-#define SEND_ELEM  10
-#define INNER_ELEM 15
-
-// MPI TAGS
-
-
 int initialization(char* file_in, char* part_type, 
                    int* nintci, int* nintcf, int* nextci, int* nextcf, 
                    int*** lcc, 
