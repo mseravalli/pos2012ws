@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
                                      &neighbors_count,
                                      &send_count, &send_list,
                                      &recv_count, &recv_list,
-                                     &epart, &npart, &objval, &local_elems);
+                                     &epart, &npart, &objval);
 
     if ( init_status != 0 ) {
         fprintf(stderr, "Failed to initialize data!\n");
@@ -107,10 +107,10 @@ int main(int argc, char *argv[]) {
     if (my_rank == 3) {
         // Implement this function in test_functions.c and call it here
 //      test_distribution(file_in, file_vtk_out, local_global_index,
-//                        local_elems, cgup);
+//                        nintcf, cgup);
         // Implement this function in test_functions.c and call it here
         test_communication(file_in, file_vtk_out, local_global_index,
-                           &local_elems, neighbors_count,
+                           &nintcf, neighbors_count,
                            send_count, send_list, recv_count, recv_list);
     }
 

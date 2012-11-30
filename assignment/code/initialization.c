@@ -351,10 +351,10 @@ int initialization(char* file_in, char* part_type,
                    int* neighbors_count,
                    int** send_count, int*** send_list,
                    int** recv_count, int*** recv_list,
-                   idx_t** epart, idx_t** npart, idx_t* objval,
-                   int* el_int_loc) {
+                   idx_t** epart, idx_t** npart, idx_t* objval) {
     /********** START INITIALIZATION **********/
     int i = 0;
+    int el_int_loc = 0;
     int el_int_tot = 0;
 
     int my_rank;
@@ -398,7 +398,7 @@ int initialization(char* file_in, char* part_type,
         (*points)[i] = &((**points)[i * 3]);
     }
     map_local_global(el_int_tot, *global_local_index,
-                     local_global_index, el_int_loc);
+                     local_global_index, &el_int_loc);
 
     // initialize the arrays
     *oc = (double*) calloc(sizeof(double), (*nintcf + 1));
@@ -446,25 +446,27 @@ int initialization(char* file_in, char* part_type,
     MPI_Bcast(*cgup, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*var, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     
-    distr_shrink(*local_global_index, *el_int_loc, bs);
-    distr_shrink(*local_global_index, *el_int_loc, be);
-    distr_shrink(*local_global_index, *el_int_loc, bn);
-    distr_shrink(*local_global_index, *el_int_loc, bw);
-    distr_shrink(*local_global_index, *el_int_loc, bl);
-    distr_shrink(*local_global_index, *el_int_loc, bh);
-    distr_shrink(*local_global_index, *el_int_loc, bp);
-    distr_shrink(*local_global_index, *el_int_loc, cgup);
-    distr_shrink(*local_global_index, *el_int_loc, var);
+    distr_shrink(*local_global_index, el_int_loc, bs);
+    distr_shrink(*local_global_index, el_int_loc, be);
+    distr_shrink(*local_global_index, el_int_loc, bn);
+    distr_shrink(*local_global_index, el_int_loc, bw);
+    distr_shrink(*local_global_index, el_int_loc, bl);
+    distr_shrink(*local_global_index, el_int_loc, bh);
+    distr_shrink(*local_global_index, el_int_loc, bp);
+    distr_shrink(*local_global_index, el_int_loc, cgup);
+    distr_shrink(*local_global_index, el_int_loc, var);
 
     /** Partition data end */
 
     /** set up communication */
-    init_commlist(*el_int_loc, *local_global_index,
+    init_commlist(el_int_loc, *local_global_index,
                   el_int_tot, *global_local_index,
                   *lcc,
                   neighbors_count,
                   send_count, send_list,
                   recv_count, recv_list);
+
+    *nintcf = el_int_loc;
 
     return 0;
 }

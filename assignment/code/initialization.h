@@ -21,7 +21,7 @@ int initialization(char* file_in, char* part_type,
                    int* neighbors_count, 
                    int** send_count, int*** send_list, 
                    int** recv_count, int*** recv_list, 
-                   idx_t** epart, idx_t** npart, idx_t* objval, int* local_elems);
+                   idx_t** epart, idx_t** npart, idx_t* objval);
 
 #endif /* INITIALIZATION_H_ */
 
