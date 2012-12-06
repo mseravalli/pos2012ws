@@ -8,18 +8,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <mpi.h>
 
-int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf, int** lcc, double* bp,
-                     double* bs, double* bw, double* bl, double* bn, double* be, double* bh,
-                     double* cnorm, double* var, double *su, double* cgup, double* residual_ratio,
-                     int* local_global_index, int* global_local_index, int neighbors_count,
-                     int* send_count, int** send_list, int* recv_count, int** recv_list) {
+int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
+                     int** lcc, double* bp, double* bs, double* bw, double* bl,
+                     double* bn, double* be, double* bh, double* cnorm, 
+                     double* var, double *su, double* cgup, 
+                     double* residual_ratio, int* local_global_index, 
+                     int* global_local_index, int neighbors_count,
+                     int* send_count, int** send_list, 
+                     int* recv_count, int** recv_list) {
     int iter = 1;
     int if1 = 0;
     int if2 = 0;
     int nor = 1;
     int nor1 = nor - 1;
     int nc = 0;
+
+    int size, my_rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     // allocate arrays used in gccg
     int nomax = 3;
@@ -52,6 +60,14 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf, in
 
     while ( iter < max_iters ) {
         /**********  START COMP PHASE 1 **********/
+
+        // send cells
+        for (int i = 0; i < size; ++i) {
+//            MPI_Type_indexed(send_count[i], 1, );
+        }
+
+        // recv cells
+
         // update the old values of direc
         for ( nc = nintci; nc <= nintcf; nc++ ) {
             direc1[nc] = direc1[nc] + resvec[nc] * cgup[nc];

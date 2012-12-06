@@ -243,7 +243,7 @@ int init_commlist(int el_int_loc, int* local_global_index,             // i, i
         (*send_count)[i] = 0;
         (*recv_count)[i] = 0;
     }
-    
+
     // count the cells to send
     int e = -1;
     for (int i = 0; i < el_int_loc; ++i) {
@@ -445,7 +445,7 @@ int initialization(char* file_in, char* part_type,
     MPI_Bcast(*bp, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*cgup, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*var, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    
+
     distr_shrink(*local_global_index, el_int_loc, bs);
     distr_shrink(*local_global_index, el_int_loc, be);
     distr_shrink(*local_global_index, el_int_loc, bn);

@@ -49,7 +49,6 @@ int main(int argc, char *argv[]) {
                        /// each cell has 8 points
 
     /** Mapping between local and remote cell indices */
-    int local_elems;
     int* local_global_index;    /// local to global index mapping
     int* global_local_index;    /// global to local index mapping
 
@@ -117,7 +116,7 @@ int main(int argc, char *argv[]) {
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
-//  int total_iters = 0;
+    int total_iters = 0;
 //  total_iters = compute_solution(max_iters, nintci, nintcf, nextcf,
 //                                 lcc, bp, bs, bw, bl, bn, be, bh,
 //                                 cnorm, var, su, cgup, &residual_ratio,

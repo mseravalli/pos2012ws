@@ -18,10 +18,10 @@
 #define SEND_ELEM  10
 #define INNER_ELEM 15
 
-int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index, 
+int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index,
                       int num_elems, double *cgup_local) {
     int result = 0;
-    
+
     int nintci, nintcf;
     int nextci, nextcf;
     int **lcc;
@@ -33,16 +33,16 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     int* elems;
 
     // initialize the elements
-    result = read_binary_geo(file_in, 
+    result = read_binary_geo(file_in,
                              &nintci, &nintcf, &nextci, &nextcf,
                              &lcc,
-                             &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, 
+                             &bs, &be, &bn, &bw, &bl, &bh, &bp, &su,
                              &points_count, &points, &elems);
-    
+
     if ( result != 0 ) return result;
 
     // select the correct content to instert into distr
-    int elem_count = nintcf -nintci + 1; 
+    int elem_count = nintcf -nintci + 1;
 
     double* distr = (double*) calloc(elem_count, sizeof(double));
 
@@ -52,10 +52,10 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
 
     for (int i = 0; i < num_elems; ++i) {
         distr[local_global_index[i]] = cgup_local[i];
-    }  
+    }
 
     // write the result to a vtk file
-    vtk_write_unstr_grid_header(file_in, file_vtk_out, nintci, nintcf, 
+    vtk_write_unstr_grid_header(file_in, file_vtk_out, nintci, nintcf,
                                 points_count, points, elems);
     vtk_append_double(file_vtk_out, "DISTRIBUTION", nintci, nintcf, distr);
 
@@ -65,11 +65,11 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
 }
 
 int test_communication(char* file_in, char* file_vtk_out, int* local_global_index,
-                       int* num_elems, int neighbors_count, 
-                       int* send_count, int** send_list, 
+                       int* num_elems, int neighbors_count,
+                       int* send_count, int** send_list,
                        int* recv_count, int** recv_list) {
     int result = 0;
-    
+
     int nintci, nintcf;
     int nextci, nextcf;
     int **lcc;
@@ -81,16 +81,16 @@ int test_communication(char* file_in, char* file_vtk_out, int* local_global_inde
     int* elems;
 
     // initialize the elements
-    result = read_binary_geo(file_in, 
+    result = read_binary_geo(file_in,
                              &nintci, &nintcf, &nextci, &nextcf,
                              &lcc,
-                             &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, 
+                             &bs, &be, &bn, &bw, &bl, &bh, &bp, &su,
                              &points_count, &points, &elems);
-    
+
     if ( result != 0 ) return result;
 
     // select the correct content to instert into distr
-    int elem_count = nintcf -nintci + 1; 
+    int elem_count = nintcf -nintci + 1;
 
     int* commlist = (int*) malloc(elem_count * sizeof(int));
     for (int i = 0; i < elem_count; ++i) {
@@ -113,7 +113,7 @@ int test_communication(char* file_in, char* file_vtk_out, int* local_global_inde
     }
 
     // write the result to a vtk file
-    vtk_write_unstr_grid_header(file_in, file_vtk_out, nintci, nintcf, 
+    vtk_write_unstr_grid_header(file_in, file_vtk_out, nintci, nintcf,
                                 points_count, points, elems);
     vtk_append_integer(file_vtk_out, "COMMUNICATION", nintci, nintcf, commlist);
 
