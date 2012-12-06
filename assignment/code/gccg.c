@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     /// (South, East, North, West, High, Low)
     double *bs, *be, *bn, *bw, *bl, *bh;
     double *bp;    /// Pole coefficient
-    double *su;    /// Source values
+    double *su = NULL;    /// Source values
 
     double residual_ratio = 100000;  /// the ratio between the reference and
                                      /// the current residual
