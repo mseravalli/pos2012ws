@@ -117,13 +117,13 @@ int main(int argc, char *argv[]) {
 
     /********** START COMPUTATIONAL LOOP **********/
     int total_iters = 0;
-//  total_iters = compute_solution(max_iters, nintci, nintcf, nextcf,
-//                                 lcc, bp, bs, bw, bl, bn, be, bh,
-//                                 cnorm, var, su, cgup, &residual_ratio,
-//                                 local_global_index, global_local_index,
-//                                 neighbors_count,
-//                                 send_count, send_list,
-//                                 recv_count, recv_list);
+    total_iters = compute_solution(max_iters, nintci, nintcf, nextcf,
+                                   lcc, bp, bs, bw, bl, bn, be, bh,
+                                   cnorm, var, su, cgup, &residual_ratio,
+                                   local_global_index, global_local_index,
+                                   neighbors_count,
+                                   send_count, send_list,
+                                   recv_count, recv_list);
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/

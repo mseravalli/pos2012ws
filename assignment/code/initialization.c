@@ -306,7 +306,7 @@ int init_commlist(int el_int_loc, int* local_global_index,             // i, i
             if (l < el_int_tot) {
                 int p = (int) global_local_index[l];
                 if (p != my_rank) {
-                    (*send_list)[p][s_list_progr[p]] = e;
+                    (*send_list)[p][s_list_progr[p]] = i;
                     ++(s_list_progr[p]);
                     (*recv_list)[p][r_list_progr[p]] = l;
                     ++(r_list_progr[p]);

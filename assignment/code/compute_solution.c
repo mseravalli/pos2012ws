@@ -62,8 +62,13 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         /**********  START COMP PHASE 1 **********/
 
         // send cells
+        double** send_values = NULL;
+        send_values = (double**) calloc(6, sizeof(double*));
         for (int i = 0; i < size; ++i) {
-//            MPI_Type_indexed(send_count[i], 1, );
+            if (send_count[i] > 0) {
+                send_values[i] = (double*)calloc(send_count[i], sizeof(double));
+//                MPI_Type_indexed(send_count[i], NULL, send_list[i], );
+            }
         }
 
         // recv cells
