@@ -218,7 +218,7 @@ int build_global_local(int el_int_tot, int* part_elems,
 
     for (int i = 0; i < size; ++i) {
         for (int j = 0; j < recv_count[i]; ++j) {
-            if ((*global_local)[recv_list[i][j]] != -1) {
+            if ((*global_local)[recv_list[i][j]] == -1) {
                 (*global_local)[recv_list[i][j]] = count;
                 ++count;
             }
@@ -390,7 +390,8 @@ int initialization(char* file_in, char* part_type,
     int el_int_tot = 0;
     int el_ext_loc = 0;
 
-    int my_rank;
+    int size, my_rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     /** Partition data start */
@@ -446,6 +447,17 @@ int initialization(char* file_in, char* part_type,
                        global_local_index);
   
     build_local_global(el_int_tot, *global_local_index, local_global_index);
+    
+    // local values for send and recv list
+    for (int i = 0; i < size; ++i) { 
+        for (int j = 0; j < (*send_count)[i]; ++j) {
+            (*send_list)[i][j] = (*global_local_index)[(*send_list)[i][j]];
+        }
+        for (int j = 0; j < (*recv_count)[i]; ++j) {
+            (*recv_list)[i][j] = (*global_local_index)[(*recv_list)[i][j]];
+             printf("%d %d - %d\n", i, j, (*recv_list)[i][j]);
+        }
+    }
 
     // initialize the arrays
     *oc = (double*) calloc(sizeof(double), (*nintcf + 1));

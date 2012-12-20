@@ -105,10 +105,10 @@ int test_communication(char* file_in, char* file_vtk_out, int* local_global_inde
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     for (int i = 0; i < size; ++i) {
         for (int j = 0; j < send_count[i]; ++j) {
-            commlist[send_list[i][j]] = SEND_ELEM;
+            commlist[local_global_index[send_list[i][j]]] = SEND_ELEM;
         }
         for (int j = 0; j < recv_count[i]; ++j) {
-            commlist[recv_list[i][j]] = RECV_ELEM;
+            commlist[local_global_index[recv_list[i][j]]] = RECV_ELEM;
         }
     }
 
