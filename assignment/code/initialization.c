@@ -247,6 +247,47 @@ int build_local_global(int el_int_tot, int* global_local, int** local_global) {
     return 0;
 }
 
+int compare(const void * a, const void * b) {
+    return ( *(int*)a - *(int*)b );
+}
+
+int remove_duplicates(int** array, int num, int* new_num) {
+    qsort(*array, num, sizeof(int), compare);
+
+    // look how may duplicates there are
+    int dupl = 0;
+    int last = (*array)[0];
+    for (int i = 1; i < num; ++i) {
+        if ((*array)[i] == last) {
+            ++dupl;
+        } else {
+            last = (*array)[i];
+        }
+    }
+
+    if (dupl == 0)
+        return 0;
+
+    int* tmp = (int*) calloc(num - dupl, sizeof(int));
+    *new_num = num - dupl;
+
+    dupl = 0;
+    last = (*array)[0];
+    tmp[dupl] = last;
+    for (int i = 1; i < num; ++i) {
+        if ((*array)[i] != last) {
+            ++dupl;
+            last = (*array)[i];
+            tmp[dupl] = last;
+        } 
+    }
+
+    free(*array);
+    *array = tmp;
+
+    return 0;
+}
+
 /**
  * Initialize the communication lists
  */
@@ -346,6 +387,20 @@ int init_commlist(int el_int_tot, int* part_elems, int** lcc,  // i,i,i
 
     free(s_list_progr);
     free(r_list_progr);
+
+    // remove duplicates
+        for (int i = 0; i < size; ++i) {
+        if ((*send_count)[i] > 0) {
+            remove_duplicates(&((*send_list)[i]), 
+                              (*send_count)[i], 
+                              &((*send_count)[i]));
+        }
+        if ((*recv_count)[i] > 0) {
+            remove_duplicates(&((*recv_list)[i]), 
+                              (*recv_count)[i],
+                              &((*recv_count)[i]));
+        }
+    }
 
     return result;
 }
@@ -455,7 +510,6 @@ int initialization(char* file_in, char* part_type,
         }
         for (int j = 0; j < (*recv_count)[i]; ++j) {
             (*recv_list)[i][j] = (*global_local_index)[(*recv_list)[i][j]];
-             printf("%d %d - %d\n", i, j, (*recv_list)[i][j]);
         }
     }
 
