@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     double *var;    /// the variation vector -> keeps the result in the end
 
     /** Additional vectors required for the computation */
-    double *cgup, *oc, *cnorm;
+    double *cgup = NULL, *oc = NULL, *cnorm = NULL;
 
     /** Geometry data */
     int points_count;  /// total number of points that define the geometry

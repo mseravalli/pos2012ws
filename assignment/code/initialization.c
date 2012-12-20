@@ -136,7 +136,7 @@ int partition(char* file_in, char* part_type,
               double** bl, double** bh, double** bp, double** su,
               int* points_count, int*** points,
               int* el_int_tot, int** elems,
-              int** global_local_index,
+              int** part_elems,
               idx_t** epart, idx_t** npart, idx_t* objval) {
     // read-in the input file
     int f_status = read_binary_geo(file_in,
@@ -181,9 +181,9 @@ int partition(char* file_in, char* part_type,
         return -1;
     }
 
-    *global_local_index = calloc(*el_int_tot, sizeof(int));
+    *part_elems = calloc(*el_int_tot, sizeof(int));
     for (int i = 0; i < *el_int_tot; ++i) {
-        (*global_local_index)[i] = (*epart)[i];
+        (*part_elems)[i] = (*epart)[i];
     }
 
     free(*epart);
@@ -192,43 +192,70 @@ int partition(char* file_in, char* part_type,
     return part_result;
 }
 
-int map_local_global(int el_int_tot, int* global_local, int** local_global,
-                     int* el_int_loc) {
-    int result = 0;
+int build_global_local(int el_int_tot, int* part_elems,
+                       int* recv_count, int** recv_list,
+                       int* el_ext_loc,
+                       int** global_local) {
+    *global_local = (int*) calloc(el_int_tot, sizeof(int));
+    
+    int my_rank = -1;
+    int size = -1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    *el_int_loc = 0;
+    int count = 0;
     for (int i = 0; i < el_int_tot; ++i) {
-        if (global_local[i] == rank) {
-            (*el_int_loc)++;
+        if (part_elems[i] == my_rank) {
+            (*global_local)[i] = count;
+            ++count;
+        } else {
+            (*global_local)[i] = -1;
+        }
+    }
+    
+    int el_int_loc = count;
+
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < recv_count[i]; ++j) {
+            if ((*global_local)[recv_list[i][j]] != -1) {
+                (*global_local)[recv_list[i][j]] = count;
+                ++count;
+            }
         }
     }
 
-    /**
-     * the local_global array will reference the position
-     * of the current element within the elems array / 8
-     */
-    *local_global = malloc((*el_int_loc) * sizeof(int));
-    for (int i = 0, j = 0; i < el_int_tot; ++i) {
-        if (global_local[i] == rank) {
-            (*local_global)[j] = i;
-            ++j;
+    *el_ext_loc = count - el_int_loc; 
+
+    return 0;
+}
+
+int build_local_global(int el_int_tot, int* global_local, int** local_global) {
+    int count = 0;
+    for (int i = 0; i < el_int_tot; ++i) {
+        if (global_local[i] != -1) {
+            ++count;
         }
     }
 
-    return result;
+    *local_global = (int*) calloc(count, sizeof(int));
+    for (int i = 0; i < el_int_tot; ++i) {
+        if (global_local[i] != -1) {
+            if (global_local[i] < count)
+                (*local_global)[global_local[i]] = i;
+            else
+                printf("something's wrong here: %d - %d \n", global_local[i], count);
+        }
+    }
+    return 0;
 }
 
 /**
  * Initialize the communication lists
  */
-int init_commlist(int el_int_loc, int* local_global_index,             // i, i
-                  int el_int_tot, int* global_local_index, int** lcc,  // i,i,i
-                  int* neighbors_count,                                 // o
-                  int** send_count, int*** send_list,                   // o, o
-                  int** recv_count, int*** recv_list) {                 // o, o
+int init_commlist(int el_int_tot, int* part_elems, int** lcc,  // i,i,i
+                  int* neighbors_count,                        // o
+                  int** send_count, int*** send_list,          // o, o
+                  int** recv_count, int*** recv_list) {        // o, o
     int result = 0;
     int my_rank = -1;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -245,9 +272,11 @@ int init_commlist(int el_int_loc, int* local_global_index,             // i, i
     }
 
     // count the cells to send
-    int e = -1;
-    for (int i = 0; i < el_int_loc; ++i) {
-        e = local_global_index[i];
+    for (int i = 0; i < el_int_tot; ++i) {
+        // if the element is not owned my the current processor skip it
+        if (part_elems[i] != my_rank) {
+            continue;
+        }
         /**
          * see what cells need to be received and sent
          * if a cell has a neighbour, the neighbour has to be received
@@ -255,9 +284,9 @@ int init_commlist(int el_int_loc, int* local_global_index,             // i, i
          * exclude the external cells
          */
         for (int j = 0; j < 6; ++j) {
-            int l = lcc[e][j];
+            int l = lcc[i][j];
             if (l < el_int_tot) {
-                int p = (int) global_local_index[l];
+                int p = (int) part_elems[l];
                 if (p != my_rank) {
                     ++((*send_count)[p]);
                     ++((*recv_count)[p]);
@@ -299,12 +328,14 @@ int init_commlist(int el_int_loc, int* local_global_index,             // i, i
     }
 
     // initalize the lists
-    for (int i = 0; i < el_int_loc; ++i) {
-        e = local_global_index[i];
+    for (int i = 0; i < el_int_tot; ++i) {
+        if (part_elems[i] != my_rank) {
+            continue;
+        }
         for (int j = 0; j < 6; ++j) {
-            int l = lcc[e][j];
+            int l = lcc[i][j];
             if (l < el_int_tot) {
-                int p = (int) global_local_index[l];
+                int p = (int) part_elems[l];
                 if (p != my_rank) {
                     (*send_list)[p][s_list_progr[p]] = i;
                     ++(s_list_progr[p]);
@@ -326,10 +357,13 @@ int init_commlist(int el_int_loc, int* local_global_index,             // i, i
  * value will always be 0, therefore this can be done directly in the 
  * computation part
  */
-int distr_shrink(int* local_global, int el_int_loc, double** array) {
+int distr_shrink(int* local_global, 
+                 int el_int_loc, 
+                 int el_ext_loc, 
+                 double** array) {
     int result = 0;
 
-    double* tmp = (double*) calloc(el_int_loc, sizeof(double));
+    double* tmp = (double*) calloc(el_int_loc + el_ext_loc, sizeof(double));
     for (int i = 0; i < el_int_loc; ++i) {
         tmp[i] = (*array)[local_global[i]];
     }
@@ -356,18 +390,20 @@ int initialization(char* file_in, char* part_type,
     int i = 0;
     int el_int_loc = 0;
     int el_int_tot = 0;
+    int el_ext_loc = 0;
 
     int my_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     /** Partition data start */
     int part_res = -1;
+    int* part_elems = NULL;
     // perform partition only on proc 0
     if (my_rank == 0) {
         part_res =  partition(file_in, part_type, nintci, nintcf, nextci, nextcf,
                               lcc, bs, be, bn, bw, bl, bh, bp, su,
                               points_count, points, &el_int_tot, elems,
-                              global_local_index, epart, npart, objval);
+                              &part_elems, epart, npart, objval);
     }
 
     MPI_Bcast(&el_int_tot, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -378,7 +414,7 @@ int initialization(char* file_in, char* part_type,
 
     // init arrays before receiving them
     if (my_rank != 0) {
-        *global_local_index = (int*) calloc(el_int_tot, sizeof(int));
+        part_elems = (int*) calloc(el_int_tot, sizeof(int));
         *elems = (int*) malloc(el_int_tot * 8 * sizeof(int));
         *lcc  = (int**) malloc(el_int_tot * sizeof(int*));
         **lcc = (int*)  malloc(el_int_tot * 6 * sizeof(int));
@@ -387,7 +423,7 @@ int initialization(char* file_in, char* part_type,
     }
 
     // broadcast the necessary arrays that do not need to be partitioned
-    MPI_Bcast(*global_local_index, el_int_tot, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(part_elems, el_int_tot, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(*elems, el_int_tot * 8, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(**lcc, el_int_tot * 6, MPI_INT, 0, MPI_COMM_WORLD);
     for (i = 0; i < el_int_tot; ++i) {
@@ -397,8 +433,20 @@ int initialization(char* file_in, char* part_type,
     for (i = 0; i < *points_count; ++i) {
         (*points)[i] = &((**points)[i * 3]);
     }
-    map_local_global(el_int_tot, *global_local_index,
-                     local_global_index, &el_int_loc);
+
+    // set up communication
+    init_commlist(el_int_tot, part_elems,
+                  *lcc,
+                  neighbors_count,
+                  send_count, send_list,
+                  recv_count, recv_list);
+    
+    build_global_local(el_int_tot, part_elems,
+                       *recv_count, *recv_list,
+                       &el_ext_loc,
+                       global_local_index);
+  
+    build_local_global(el_int_tot, *global_local_index, local_global_index);
 
     // initialize the arrays
     *oc = (double*) calloc(sizeof(double), (*nintcf + 1));
@@ -448,28 +496,22 @@ int initialization(char* file_in, char* part_type,
     MPI_Bcast(*cgup, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*var, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    distr_shrink(*local_global_index, el_int_loc, bs);
-    distr_shrink(*local_global_index, el_int_loc, be);
-    distr_shrink(*local_global_index, el_int_loc, bn);
-    distr_shrink(*local_global_index, el_int_loc, bw);
-    distr_shrink(*local_global_index, el_int_loc, bl);
-    distr_shrink(*local_global_index, el_int_loc, bh);
-    distr_shrink(*local_global_index, el_int_loc, bp);
-    distr_shrink(*local_global_index, el_int_loc, su);
-    distr_shrink(*local_global_index, el_int_loc, cgup);
-    distr_shrink(*local_global_index, el_int_loc, var);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bs);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, be);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bn);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bw);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bl);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bh);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bp);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, su);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, cgup);
+    distr_shrink(*local_global_index, el_int_loc, el_ext_loc, var);
 
     /** Partition data end */
 
-    /** set up communication */
-    init_commlist(el_int_loc, *local_global_index,
-                  el_int_tot, *global_local_index,
-                  *lcc,
-                  neighbors_count,
-                  send_count, send_list,
-                  recv_count, recv_list);
-
     *nintcf = el_int_loc;
+
+    free(part_elems);
 
     return 0;
 }
