@@ -194,6 +194,7 @@ int partition(char* file_in, char* part_type,
 
 int build_global_local(int el_int_tot, int* part_elems,
                        int* recv_count, int** recv_list,
+                       int* el_int_loc,
                        int* el_ext_loc,
                        int** global_local) {
     *global_local = (int*) calloc(el_int_tot, sizeof(int));
@@ -213,7 +214,7 @@ int build_global_local(int el_int_tot, int* part_elems,
         }
     }
     
-    int el_int_loc = count;
+    *el_int_loc = count;
 
     for (int i = 0; i < size; ++i) {
         for (int j = 0; j < recv_count[i]; ++j) {
@@ -224,7 +225,7 @@ int build_global_local(int el_int_tot, int* part_elems,
         }
     }
 
-    *el_ext_loc = count - el_int_loc; 
+    *el_ext_loc = count - *el_int_loc; 
 
     return 0;
 }
@@ -240,10 +241,7 @@ int build_local_global(int el_int_tot, int* global_local, int** local_global) {
     *local_global = (int*) calloc(count, sizeof(int));
     for (int i = 0; i < el_int_tot; ++i) {
         if (global_local[i] != -1) {
-            if (global_local[i] < count)
-                (*local_global)[global_local[i]] = i;
-            else
-                printf("something's wrong here: %d - %d \n", global_local[i], count);
+            (*local_global)[global_local[i]] = i;
         }
     }
     return 0;
@@ -443,6 +441,7 @@ int initialization(char* file_in, char* part_type,
     
     build_global_local(el_int_tot, part_elems,
                        *recv_count, *recv_list,
+                       &el_int_loc,
                        &el_ext_loc,
                        global_local_index);
   
