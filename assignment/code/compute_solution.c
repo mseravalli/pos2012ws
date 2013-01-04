@@ -10,6 +10,8 @@
 #include <math.h>
 #include <mpi.h>
 
+#include "compute_solution.h"
+
 int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
                      int** lcc, double* bp, double* bs, double* bw, double* bl,
                      double* bn, double* be, double* bh, double* cnorm, 
@@ -58,20 +60,58 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     double *dxor1 = (double *) calloc(sizeof(double), (nintcf + 1));
     double *dxor2 = (double *) calloc(sizeof(double), (nintcf + 1));
 
+    // communication initialization start
+    // define the customized types
+    int* block_len = NULL;
+    MPI_Datatype* send_types =
+        (MPI_Datatype*) calloc(size, sizeof(MPI_Datatype));
+    MPI_Datatype* recv_types = 
+        (MPI_Datatype*) calloc(size, sizeof(MPI_Datatype));
+    for (int i = 0; i < size; ++i) {
+        if (send_count[i] > 0) {
+            block_len = (int*) calloc(send_count[i], sizeof(int));
+            for (int j = 0; j < send_count[i]; ++j) {
+                block_len[j] = 1;
+            }
+            MPI_Type_indexed(send_count[i], 
+                             block_len, 
+                             send_list[i], 
+                             MPI_DOUBLE,
+                             &(send_types[i]));
+            MPI_Type_commit(&(send_types[i]));
+            free(block_len);
+        }
+        if (recv_count[i] > 0) {
+            block_len = (int*) calloc(recv_count[i], sizeof(int));
+            for (int j = 0; j < recv_count[i]; ++j) {
+                block_len[j] = 1;
+            }
+            MPI_Type_indexed(recv_count[i],
+                             block_len,
+                             recv_list[i],
+                             MPI_DOUBLE,
+                             &(recv_types[i]));
+            MPI_Type_commit(&(recv_types[i]));
+            free(block_len);
+        }
+    }
+    // variables used for synchronization
+    MPI_Status status;
+    // communication initialization end
+
     while ( iter < max_iters ) {
         /**********  START COMP PHASE 1 **********/
 
-        // send cells
-        double** send_values = NULL;
-        send_values = (double**) calloc(6, sizeof(double*));
+        // communication start
         for (int i = 0; i < size; ++i) {
             if (send_count[i] > 0) {
-                send_values[i] = (double*)calloc(send_count[i], sizeof(double));
-//                MPI_Type_indexed(send_count[i], NULL, send_list[i], );
+                MPI_Send(bp, 1, send_types[i], i, TAG_BP, MPI_COMM_WORLD);
+            }
+            if (recv_count[i] > 0) {
+                MPI_Recv(bp, 1, recv_types[i], i, TAG_BP, MPI_COMM_WORLD, &status);
             }
         }
-
-        // recv cells
+        // communication end
 
         // update the old values of direc
         for ( nc = nintci; nc <= nintcf; nc++ ) {
