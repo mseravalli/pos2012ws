@@ -9,6 +9,16 @@
 #define COMPUTE_SOLUTION_H_
 
 #define TAG_BP 10
+#define TAG_BS 20
+#define TAG_BW 30
+#define TAG_BL 40
+#define TAG_BN 50
+#define TAG_BE 60
+#define TAG_BH 70
+
+#define TAG_VAR  100
+#define TAG_SU   110
+#define TAG_CGUP 120
 
 int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf, int** lcc, double* bp,
                      double* bs, double* bw, double* bl, double* bn, double* be, double* bh,

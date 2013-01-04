@@ -106,9 +106,30 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         for (int i = 0; i < size; ++i) {
             if (send_count[i] > 0) {
                 MPI_Send(bp, 1, send_types[i], i, TAG_BP, MPI_COMM_WORLD);
+                MPI_Send(bs, 1, send_types[i], i, TAG_BS, MPI_COMM_WORLD);
+                MPI_Send(bw, 1, send_types[i], i, TAG_BW, MPI_COMM_WORLD);
+                MPI_Send(bl, 1, send_types[i], i, TAG_BL, MPI_COMM_WORLD);
+                MPI_Send(bn, 1, send_types[i], i, TAG_BN, MPI_COMM_WORLD);
+                MPI_Send(be, 1, send_types[i], i, TAG_BE, MPI_COMM_WORLD);
+                MPI_Send(bh, 1, send_types[i], i, TAG_BH, MPI_COMM_WORLD);
+
+                MPI_Send(var,  1, send_types[i], i, TAG_VAR,  MPI_COMM_WORLD);
+                MPI_Send(su,   1, send_types[i], i, TAG_SU,   MPI_COMM_WORLD);
+                MPI_Send(cgup, 1, send_types[i], i, TAG_CGUP, MPI_COMM_WORLD);
+
             }
             if (recv_count[i] > 0) {
                 MPI_Recv(bp, 1, recv_types[i], i, TAG_BP, MPI_COMM_WORLD, &status);
+                MPI_Recv(bs, 1, send_types[i], i, TAG_BS, MPI_COMM_WORLD, &status);
+                MPI_Recv(bw, 1, send_types[i], i, TAG_BW, MPI_COMM_WORLD, &status);
+                MPI_Recv(bl, 1, send_types[i], i, TAG_BL, MPI_COMM_WORLD, &status);
+                MPI_Recv(bn, 1, send_types[i], i, TAG_BN, MPI_COMM_WORLD, &status);
+                MPI_Recv(be, 1, send_types[i], i, TAG_BE, MPI_COMM_WORLD, &status);
+                MPI_Recv(bh, 1, send_types[i], i, TAG_BH, MPI_COMM_WORLD, &status);
+
+                MPI_Recv(var,  1, send_types[i], i, TAG_VAR,  MPI_COMM_WORLD, &status);
+                MPI_Recv(su,   1, send_types[i], i, TAG_SU,   MPI_COMM_WORLD, &status);
+                MPI_Recv(cgup, 1, send_types[i], i, TAG_CGUP, MPI_COMM_WORLD, &status);
             }
         }
         // communication end

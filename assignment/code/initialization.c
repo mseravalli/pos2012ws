@@ -557,6 +557,7 @@ int initialization(char* file_in, char* part_type,
     MPI_Bcast(*bl, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*bh, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*bp, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
     MPI_Bcast(*su, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*cgup, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*var, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -568,6 +569,7 @@ int initialization(char* file_in, char* part_type,
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bl);
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bh);
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bp);
+
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, su);
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, cgup);
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, var);
