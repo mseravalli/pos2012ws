@@ -36,6 +36,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
 
     /** the reference residual*/
     double resref = 0.0;
+    double global_resref = 0.0;
 
     /** array storing residuals */
     double *resvec = (double *) calloc(sizeof(double), (nintcf + 1));
@@ -45,6 +46,8 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         resvec[nc] = su[nc];
         resref = resref + resvec[nc] * resvec[nc];
     }
+    MPI_Allreduce(&resref, &global_resref, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    resref = global_resref;
 
     resref = sqrt(resref);
     if ( resref < 1.0e-15 ) {
@@ -140,17 +143,23 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         }
 
         // compute new guess (approximation) for direc
+        // TODO: put < instead of <= ??
+        // TODO: put global in lcc ??
         for ( nc = nintci; nc <= nintcf; nc++ ) {
-            direc2[nc] = bp[nc] * direc1[nc] - bs[nc] * direc1[lcc[nc][0]]
-                         - bw[nc] * direc1[lcc[nc][3]] - bl[nc] * direc1[lcc[nc][4]]
-                         - bn[nc] * direc1[lcc[nc][2]] - be[nc] * direc1[lcc[nc][1]]
-                         - bh[nc] * direc1[lcc[nc][5]];
+            direc2[nc] = bp[nc] * direc1[nc] -
+                         bs[nc] * direc1[lcc[nc][0]] -
+                         bw[nc] * direc1[lcc[nc][3]] -
+                         bl[nc] * direc1[lcc[nc][4]] -
+                         bn[nc] * direc1[lcc[nc][2]] -
+                         be[nc] * direc1[lcc[nc][1]] -
+                         bh[nc] * direc1[lcc[nc][5]];
         }
         /********** END COMP PHASE 1 **********/
 
         /********** START COMP PHASE 2 **********/
         // execute normalization steps
         double oc1, oc2, occ;
+        double global_occ = 0;
         if ( nor1 == 1 ) {
             oc1 = 0;
             occ = 0;
@@ -158,8 +167,16 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
             for ( nc = nintci; nc <= nintcf; nc++ ) {
                 occ = occ + adxor1[nc] * direc2[nc];
             }
+        
+            // communicate the global occ
+            MPI_Allreduce(&occ,
+                          &global_occ, 
+                          1, 
+                          MPI_DOUBLE, 
+                          MPI_SUM, 
+                          MPI_COMM_WORLD);
 
-            oc1 = occ / cnorm[1];
+            oc1 = global_occ / cnorm[1];
             for ( nc = nintci; nc <= nintcf; nc++ ) {
                 direc2[nc] = direc2[nc] - oc1 * adxor1[nc];
                 direc1[nc] = direc1[nc] - oc1 * dxor1[nc];
@@ -175,14 +192,19 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
                     occ = occ + adxor1[nc] * direc2[nc];
                 }
 
-                oc1 = occ / cnorm[1];
+                // communicate the global occ
+                MPI_Allreduce(&occ, &global_occ, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+                oc1 = global_occ / cnorm[1];
+
                 oc2 = 0;
                 occ = 0;
                 for ( nc = nintci; nc <= nintcf; nc++ ) {
                     occ = occ + adxor2[nc] * direc2[nc];
                 }
+                // communicate the global occ
+                MPI_Allreduce(&occ, &global_occ, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+                oc2 = global_occ / cnorm[2];
 
-                oc2 = occ / cnorm[2];
                 for ( nc = nintci; nc <= nintcf; nc++ ) {
                     direc2[nc] = direc2[nc] - oc1 * adxor1[nc] - oc2 * adxor2[nc];
                     direc1[nc] = direc1[nc] - oc1 * dxor1[nc] - oc2 * dxor2[nc];
@@ -194,19 +216,37 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
 
         // compute the new residual
         cnorm[nor] = 0;
+        double global_norm = 0;
         double omega = 0;
+        double global_omega = 0;
         for ( nc = nintci; nc <= nintcf; nc++ ) {
             cnorm[nor] = cnorm[nor] + direc2[nc] * direc2[nc];
             omega = omega + resvec[nc] * direc2[nc];
         }
 
+        // communicate the global omega and cnorm
+        MPI_Allreduce(&omega, &global_omega, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        omega = global_omega;
+        MPI_Allreduce(&(cnorm[nor]), &global_norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        cnorm[nor] = global_norm;
+
         omega = omega / cnorm[nor];
         double res_updated = 0.0;
+        double global_res = 0.0;
         for ( nc = nintci; nc <= nintcf; nc++ ) {
             var[nc] = var[nc] + omega * direc1[nc];
             resvec[nc] = resvec[nc] - omega * direc2[nc];
             res_updated = res_updated + resvec[nc] * resvec[nc];
         }
+
+        // communicate the residual
+        MPI_Allreduce(&res_updated,
+                      &global_res,
+                      1,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      MPI_COMM_WORLD);
+        res_updated = global_res;
 
         res_updated = sqrt(res_updated);
         *residual_ratio = res_updated / resref;
