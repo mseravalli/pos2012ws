@@ -20,6 +20,9 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
                      int* global_local_index, int neighbors_count,
                      int* send_count, int** send_list, 
                      int* recv_count, int** recv_list) {
+    //TODO: be sure that the following statements do not crash everything
+    --nintcf;
+
     int iter = 1;
     int if1 = 0;
     int if2 = 0;
@@ -123,16 +126,16 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
             }
             if (recv_count[i] > 0) {
                 MPI_Recv(bp, 1, recv_types[i], i, TAG_BP, MPI_COMM_WORLD, &status);
-                MPI_Recv(bs, 1, send_types[i], i, TAG_BS, MPI_COMM_WORLD, &status);
-                MPI_Recv(bw, 1, send_types[i], i, TAG_BW, MPI_COMM_WORLD, &status);
-                MPI_Recv(bl, 1, send_types[i], i, TAG_BL, MPI_COMM_WORLD, &status);
-                MPI_Recv(bn, 1, send_types[i], i, TAG_BN, MPI_COMM_WORLD, &status);
-                MPI_Recv(be, 1, send_types[i], i, TAG_BE, MPI_COMM_WORLD, &status);
-                MPI_Recv(bh, 1, send_types[i], i, TAG_BH, MPI_COMM_WORLD, &status);
+                MPI_Recv(bs, 1, recv_types[i], i, TAG_BS, MPI_COMM_WORLD, &status);
+                MPI_Recv(bw, 1, recv_types[i], i, TAG_BW, MPI_COMM_WORLD, &status);
+                MPI_Recv(bl, 1, recv_types[i], i, TAG_BL, MPI_COMM_WORLD, &status);
+                MPI_Recv(bn, 1, recv_types[i], i, TAG_BN, MPI_COMM_WORLD, &status);
+                MPI_Recv(be, 1, recv_types[i], i, TAG_BE, MPI_COMM_WORLD, &status);
+                MPI_Recv(bh, 1, recv_types[i], i, TAG_BH, MPI_COMM_WORLD, &status);
 
-                MPI_Recv(var,  1, send_types[i], i, TAG_VAR,  MPI_COMM_WORLD, &status);
-                MPI_Recv(su,   1, send_types[i], i, TAG_SU,   MPI_COMM_WORLD, &status);
-                MPI_Recv(cgup, 1, send_types[i], i, TAG_CGUP, MPI_COMM_WORLD, &status);
+                MPI_Recv(var,  1, recv_types[i], i, TAG_VAR,  MPI_COMM_WORLD, &status);
+                MPI_Recv(su,   1, recv_types[i], i, TAG_SU,   MPI_COMM_WORLD, &status);
+                MPI_Recv(cgup, 1, recv_types[i], i, TAG_CGUP, MPI_COMM_WORLD, &status);
             }
         }
         // communication end
@@ -144,7 +147,6 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
 
         // compute new guess (approximation) for direc
         // TODO: put < instead of <= ??
-        // TODO: put global in lcc ??
         for ( nc = nintci; nc <= nintcf; nc++ ) {
             direc2[nc] = bp[nc] * direc1[nc] -
                          bs[nc] * direc1[lcc[nc][0]] -

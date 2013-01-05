@@ -406,9 +406,8 @@ int init_commlist(int el_int_tot, int* part_elems, int** lcc,  // i,i,i
 }
 
 /**
- * The external cells are not needed to be taken into accout because their
- * value will always be 0, therefore this can be done directly in the 
- * computation part
+ * The last element is 0, this correspond to the external cells, lcc will take
+ * this into account 
  */
 int distr_shrink(int* local_global, 
                  int el_int_loc, 
@@ -416,10 +415,11 @@ int distr_shrink(int* local_global,
                  double** array) {
     int result = 0;
 
-    double* tmp = (double*) calloc(el_int_loc + el_ext_loc, sizeof(double));
+    double* tmp = (double*) calloc(el_int_loc + el_ext_loc + 1, sizeof(double));
     for (int i = 0; i < el_int_loc; ++i) {
         tmp[i] = (*array)[local_global[i]];
     }
+    tmp[el_int_loc + el_ext_loc] = 0;
     free(*array);
     *array = tmp;
 
@@ -503,6 +503,17 @@ int initialization(char* file_in, char* part_type,
   
     build_local_global(el_int_tot, *global_local_index, local_global_index);
     
+    // local values for lcc
+    for (int i = 0; i < el_int_loc; ++i) {
+        for (int j = 0; j < 6; ++j) {
+            if ((*lcc)[i][j] < el_int_tot) {
+                (*lcc)[i][j] = (*global_local_index)[(*lcc)[i][j]];
+            } else {
+                (*lcc)[i][j] = el_int_loc + el_ext_loc;
+            }
+        }
+    }
+
     // local values for send and recv list
     for (int i = 0; i < size; ++i) { 
         for (int j = 0; j < (*send_count)[i]; ++j) {
@@ -576,7 +587,9 @@ int initialization(char* file_in, char* part_type,
 
     /** Partition data end */
 
+    *nintci = 0;
     *nintcf = el_int_loc;
+    *nextcf = el_int_loc + el_ext_loc;
 
     free(part_elems);
 
