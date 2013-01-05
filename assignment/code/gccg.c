@@ -127,12 +127,10 @@ int main(int argc, char *argv[]) {
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/
-//  if (my_rank == 0 ) {
-//      finalization(file_in, out_prefix,
-//                   total_iters, residual_ratio, nintci, nintcf,
-//                   points_count, points, elems,
-//                   var, cgup, su);
-//  }
+    finalization(file_in, out_prefix,
+                 total_iters, residual_ratio, nintci, nintcf,
+                 points_count, points, elems,
+                 var, cgup, su, local_global_index);
     /********** END FINALIZATION **********/
 
     free(cnorm);
