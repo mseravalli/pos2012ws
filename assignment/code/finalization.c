@@ -78,11 +78,13 @@ void finalization(char* file_in, char* out_prefix, int total_iters,
     merge_arrayd(nintcf, var,  local_global, &var_glob);
     merge_arrayd(nintcf, cgup, local_global, &cgup_glob);
     merge_arrayd(nintcf, su,   local_global, &su_glob);
-
+  
     int el_int_glob = 0;
     MPI_Reduce(&nintcf, &el_int_glob, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
+  
     if (rank == 0) {
+        //TODO: be sure that the following statements do not crash everything
+        --el_int_glob;
         char file_out[100];
         sprintf(file_out, "%s_summary.out", out_prefix);
   
@@ -93,12 +95,12 @@ void finalization(char* file_in, char* out_prefix, int total_iters,
         vtk_write_unstr_grid_header(file_in, file_out,
                                     nintci, el_int_glob, 
                                     points_count, points, elems);
-        vtk_append_double(file_out, "VAR",  nintci, el_int_glob, var_glob);
         vtk_append_double(file_out, "CGUP", nintci, el_int_glob, cgup_glob);
         vtk_append_double(file_out, "SU",   nintci, el_int_glob, su_glob);
+        vtk_append_double(file_out, "VAR",  nintci, el_int_glob, var_glob);
   
         if ( status != 0 ) fprintf(stderr, "Error when trying to write to file %s\n", file_out);
-
+  
         free(var_glob);
         free(cgup_glob);
         free(su_glob);
