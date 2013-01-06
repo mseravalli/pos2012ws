@@ -23,51 +23,12 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     //TODO: be sure that the following statements do not crash everything
     --nintcf;
 
-    int iter = 1;
-    int if1 = 0;
-    int if2 = 0;
-    int nor = 1;
-    int nor1 = nor - 1;
-    int nc = 0;
-
+    // communication initialization start
+    // define the customized types
     int size, my_rank;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-    // allocate arrays used in gccg
-    int nomax = 3;
-
-    /** the reference residual*/
-    double resref = 0.0;
-    double global_resref = 0.0;
-
-    /** array storing residuals */
-    double *resvec = (double *) calloc(sizeof(double), (nintcf + 1));
-
-    // initialize the reference residual
-    for ( nc = nintci; nc <= nintcf; nc++ ) {
-        resvec[nc] = su[nc];
-        resref = resref + resvec[nc] * resvec[nc];
-    }
-    MPI_Allreduce(&resref, &global_resref, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    resref = global_resref;
-
-    resref = sqrt(resref);
-    if ( resref < 1.0e-15 ) {
-        fprintf(stderr, "Residue sum less than 1.e-15 - %lf\n", resref);
-        return 0;
-    }
-
-    /** the computation vectors */
-    double *direc1 = (double *) calloc(sizeof(double), (nextcf + 1));
-    double *direc2 = (double *) calloc(sizeof(double), (nextcf + 1));
-    double *adxor1 = (double *) calloc(sizeof(double), (nintcf + 1));
-    double *adxor2 = (double *) calloc(sizeof(double), (nintcf + 1));
-    double *dxor1 = (double *) calloc(sizeof(double), (nintcf + 1));
-    double *dxor2 = (double *) calloc(sizeof(double), (nintcf + 1));
-
-    // communication initialization start
-    // define the customized types
     int* block_len = NULL;
     MPI_Datatype* send_types =
         (MPI_Datatype*) calloc(size, sizeof(MPI_Datatype));
@@ -103,7 +64,58 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     }
     // variables used for synchronization
     MPI_Status status;
+    struct requests* req = (struct requests*) calloc(size, sizeof(struct requests));
     // communication initialization end
+
+    int iter = 1;
+    int if1 = 0;
+    int if2 = 0;
+    int nor = 1;
+    int nor1 = nor - 1;
+    int nc = 0;
+
+    // allocate arrays used in gccg
+    int nomax = 3;
+
+    /** the reference residual*/
+    double resref = 0.0;
+    double global_resref = 0.0;
+
+    /** array storing residuals */
+    double *resvec = (double *) calloc(sizeof(double), (nintcf + 1));
+
+    // initialize the reference residual
+    // exchange su
+    // communication start
+    for (int i = 0; i < size; ++i) {
+        if (send_count[i] > 0) {
+            MPI_Send(su,   1, send_types[i], i, TAG_SU,   MPI_COMM_WORLD);
+        }
+        if (recv_count[i] > 0) {
+            MPI_Recv(su,   1, recv_types[i], i, TAG_SU,   MPI_COMM_WORLD, &status);
+        }
+    }
+        // communication end
+    for ( nc = nintci; nc <= nintcf; nc++ ) {
+        resvec[nc] = su[nc];
+        resref = resref + resvec[nc] * resvec[nc];
+    }
+    MPI_Allreduce(&resref, &global_resref, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    resref = global_resref;
+
+    resref = sqrt(resref);
+    if ( resref < 1.0e-15 ) {
+        fprintf(stderr, "Residue sum less than 1.e-15 - %lf\n", resref);
+        return 0;
+    }
+
+    /** the computation vectors */
+    double *direc1 = (double *) calloc(sizeof(double), (nextcf + 1));
+    double *direc2 = (double *) calloc(sizeof(double), (nextcf + 1));
+    double *adxor1 = (double *) calloc(sizeof(double), (nintcf + 1));
+    double *adxor2 = (double *) calloc(sizeof(double), (nintcf + 1));
+    double *dxor1 = (double *) calloc(sizeof(double), (nintcf + 1));
+    double *dxor2 = (double *) calloc(sizeof(double), (nintcf + 1));
 
     while ( iter < max_iters ) {
         /**********  START COMP PHASE 1 **********/
@@ -111,42 +123,56 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         // communication start
         for (int i = 0; i < size; ++i) {
             if (send_count[i] > 0) {
-                MPI_Send(bp, 1, send_types[i], i, TAG_BP, MPI_COMM_WORLD);
-                MPI_Send(bs, 1, send_types[i], i, TAG_BS, MPI_COMM_WORLD);
-                MPI_Send(bw, 1, send_types[i], i, TAG_BW, MPI_COMM_WORLD);
-                MPI_Send(bl, 1, send_types[i], i, TAG_BL, MPI_COMM_WORLD);
-                MPI_Send(bn, 1, send_types[i], i, TAG_BN, MPI_COMM_WORLD);
-                MPI_Send(be, 1, send_types[i], i, TAG_BE, MPI_COMM_WORLD);
-                MPI_Send(bh, 1, send_types[i], i, TAG_BH, MPI_COMM_WORLD);
+                MPI_Isend(cgup, 1, send_types[i], i, TAG_CGUP, MPI_COMM_WORLD, &(req[i].cgup_send));
+                MPI_Isend(bp, 1, send_types[i], i, TAG_BP, MPI_COMM_WORLD, &(req[i].bp_send));
+                MPI_Isend(bs, 1, send_types[i], i, TAG_BS, MPI_COMM_WORLD, &(req[i].bs_send));
+                MPI_Isend(bw, 1, send_types[i], i, TAG_BW, MPI_COMM_WORLD, &(req[i].bw_send));
+                MPI_Isend(bl, 1, send_types[i], i, TAG_BL, MPI_COMM_WORLD, &(req[i].bl_send));
+                MPI_Isend(bn, 1, send_types[i], i, TAG_BN, MPI_COMM_WORLD, &(req[i].bn_send));
+                MPI_Isend(be, 1, send_types[i], i, TAG_BE, MPI_COMM_WORLD, &(req[i].be_send));
+                MPI_Isend(bh, 1, send_types[i], i, TAG_BH, MPI_COMM_WORLD, &(req[i].bh_send));
 
-                MPI_Send(var,  1, send_types[i], i, TAG_VAR,  MPI_COMM_WORLD);
-                MPI_Send(su,   1, send_types[i], i, TAG_SU,   MPI_COMM_WORLD);
-                MPI_Send(cgup, 1, send_types[i], i, TAG_CGUP, MPI_COMM_WORLD);
-
+                MPI_Isend(var,  1, send_types[i], i, TAG_VAR,  MPI_COMM_WORLD, &(req[i].var_send));
+                MPI_Isend(su,   1, send_types[i], i, TAG_SU,   MPI_COMM_WORLD, &(req[i].su_send));
             }
             if (recv_count[i] > 0) {
-                MPI_Recv(bp, 1, recv_types[i], i, TAG_BP, MPI_COMM_WORLD, &status);
-                MPI_Recv(bs, 1, recv_types[i], i, TAG_BS, MPI_COMM_WORLD, &status);
-                MPI_Recv(bw, 1, recv_types[i], i, TAG_BW, MPI_COMM_WORLD, &status);
-                MPI_Recv(bl, 1, recv_types[i], i, TAG_BL, MPI_COMM_WORLD, &status);
-                MPI_Recv(bn, 1, recv_types[i], i, TAG_BN, MPI_COMM_WORLD, &status);
-                MPI_Recv(be, 1, recv_types[i], i, TAG_BE, MPI_COMM_WORLD, &status);
-                MPI_Recv(bh, 1, recv_types[i], i, TAG_BH, MPI_COMM_WORLD, &status);
+                MPI_Irecv(cgup, 1, recv_types[i], i, TAG_CGUP, MPI_COMM_WORLD, &(req[i].cgup_recv));
+                MPI_Irecv(bp, 1, recv_types[i], i, TAG_BP, MPI_COMM_WORLD, &(req[i].bp_recv));
+                MPI_Irecv(bs, 1, recv_types[i], i, TAG_BS, MPI_COMM_WORLD, &(req[i].bs_recv));
+                MPI_Irecv(bw, 1, recv_types[i], i, TAG_BW, MPI_COMM_WORLD, &(req[i].bw_recv));
+                MPI_Irecv(bl, 1, recv_types[i], i, TAG_BL, MPI_COMM_WORLD, &(req[i].bl_recv));
+                MPI_Irecv(bn, 1, recv_types[i], i, TAG_BN, MPI_COMM_WORLD, &(req[i].bn_recv));
+                MPI_Irecv(be, 1, recv_types[i], i, TAG_BE, MPI_COMM_WORLD, &(req[i].be_recv));
+                MPI_Irecv(bh, 1, recv_types[i], i, TAG_BH, MPI_COMM_WORLD, &(req[i].bh_recv));
 
-                MPI_Recv(var,  1, recv_types[i], i, TAG_VAR,  MPI_COMM_WORLD, &status);
-                MPI_Recv(su,   1, recv_types[i], i, TAG_SU,   MPI_COMM_WORLD, &status);
-                MPI_Recv(cgup, 1, recv_types[i], i, TAG_CGUP, MPI_COMM_WORLD, &status);
+                MPI_Irecv(var,  1, recv_types[i], i, TAG_VAR,  MPI_COMM_WORLD, &(req[i].var_recv));
+//              MPI_Irecv(su,   1, recv_types[i], i, TAG_SU,   MPI_COMM_WORLD, &(req[i].su_recv));
             }
         }
         // communication end
 
-        // update the old values of direc
+        // update the old values of direc wait for cgup to be received
+        for (int i = 0; i < size; ++i) {
+            if (recv_count[i] > 0) {
+                MPI_Wait(&(req[i].cgup_recv), &status);
+            }
+        }        
         for ( nc = nintci; nc <= nintcf; nc++ ) {
             direc1[nc] = direc1[nc] + resvec[nc] * cgup[nc];
         }
 
-        // compute new guess (approximation) for direc
-        // TODO: put < instead of <= ??
+        // compute new guess (approximation) for direc wait for the bs to be received
+        for (int i = 0; i < size; ++i) {
+            if (recv_count[i] > 0) {
+                MPI_Wait(&(req[i].bp_recv), &status);
+                MPI_Wait(&(req[i].bs_recv), &status);
+                MPI_Wait(&(req[i].bw_recv), &status);
+                MPI_Wait(&(req[i].bl_recv), &status);
+                MPI_Wait(&(req[i].bn_recv), &status);
+                MPI_Wait(&(req[i].be_recv), &status);
+                MPI_Wait(&(req[i].bh_recv), &status);
+            }
+        }        
         for ( nc = nintci; nc <= nintcf; nc++ ) {
             direc2[nc] = bp[nc] * direc1[nc] -
                          bs[nc] * direc1[lcc[nc][0]] -
@@ -235,6 +261,12 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         omega = omega / cnorm[nor];
         double res_updated = 0.0;
         double global_res = 0.0;
+        //wait to receive var
+        for (int i = 0; i < size; ++i) {
+            if (recv_count[i] > 0) {
+                MPI_Wait(&(req[i].var_recv), &status);
+            }
+        }        
         for ( nc = nintci; nc <= nintcf; nc++ ) {
             var[nc] = var[nc] + omega * direc1[nc];
             resvec[nc] = resvec[nc] - omega * direc2[nc];
