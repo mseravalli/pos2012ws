@@ -66,6 +66,11 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     double *dxor1 = (double *) calloc(sizeof(double), (nintcf + 1));
     double *dxor2 = (double *) calloc(sizeof(double), (nintcf + 1));
 
+    for (int i = 0; i <= nextcf; ++i) {
+        direc1[i] = 0;
+        direc2[i] = 0;
+    }
+
     // communication initialization start
     // define the customized types
     int* block_len = NULL;
@@ -105,40 +110,52 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     MPI_Status status;
     // communication initialization end
 
+    // communication start
+    for (int i = 0; i < size; ++i) {
+        if (send_count[i] > 0) {
+            MPI_Send(bp, 1, send_types[i], i, TAG_BP, MPI_COMM_WORLD);
+            MPI_Send(bs, 1, send_types[i], i, TAG_BS, MPI_COMM_WORLD);
+            MPI_Send(bw, 1, send_types[i], i, TAG_BW, MPI_COMM_WORLD);
+            MPI_Send(bl, 1, send_types[i], i, TAG_BL, MPI_COMM_WORLD);
+            MPI_Send(bn, 1, send_types[i], i, TAG_BN, MPI_COMM_WORLD);
+            MPI_Send(be, 1, send_types[i], i, TAG_BE, MPI_COMM_WORLD);
+            MPI_Send(bh, 1, send_types[i], i, TAG_BH, MPI_COMM_WORLD);
+
+            MPI_Send(var,  1, send_types[i], i, TAG_VAR,  MPI_COMM_WORLD);
+            MPI_Send(su,   1, send_types[i], i, TAG_SU,   MPI_COMM_WORLD);
+            MPI_Send(cgup, 1, send_types[i], i, TAG_CGUP, MPI_COMM_WORLD);
+
+        }
+        if (recv_count[i] > 0) {
+            MPI_Recv(bp, 1, recv_types[i], i, TAG_BP, MPI_COMM_WORLD, &status);
+            MPI_Recv(bs, 1, recv_types[i], i, TAG_BS, MPI_COMM_WORLD, &status);
+            MPI_Recv(bw, 1, recv_types[i], i, TAG_BW, MPI_COMM_WORLD, &status);
+            MPI_Recv(bl, 1, recv_types[i], i, TAG_BL, MPI_COMM_WORLD, &status);
+            MPI_Recv(bn, 1, recv_types[i], i, TAG_BN, MPI_COMM_WORLD, &status);
+            MPI_Recv(be, 1, recv_types[i], i, TAG_BE, MPI_COMM_WORLD, &status);
+            MPI_Recv(bh, 1, recv_types[i], i, TAG_BH, MPI_COMM_WORLD, &status);
+
+            MPI_Recv(var,  1, recv_types[i], i, TAG_VAR,  MPI_COMM_WORLD, &status);
+            MPI_Recv(su,   1, recv_types[i], i, TAG_SU,   MPI_COMM_WORLD, &status);
+            MPI_Recv(cgup, 1, recv_types[i], i, TAG_CGUP, MPI_COMM_WORLD, &status);
+        }
+    }
+    // communication end
+
     while ( iter < max_iters ) {
         /**********  START COMP PHASE 1 **********/
-
         // communication start
         for (int i = 0; i < size; ++i) {
             if (send_count[i] > 0) {
-                MPI_Send(bp, 1, send_types[i], i, TAG_BP, MPI_COMM_WORLD);
-                MPI_Send(bs, 1, send_types[i], i, TAG_BS, MPI_COMM_WORLD);
-                MPI_Send(bw, 1, send_types[i], i, TAG_BW, MPI_COMM_WORLD);
-                MPI_Send(bl, 1, send_types[i], i, TAG_BL, MPI_COMM_WORLD);
-                MPI_Send(bn, 1, send_types[i], i, TAG_BN, MPI_COMM_WORLD);
-                MPI_Send(be, 1, send_types[i], i, TAG_BE, MPI_COMM_WORLD);
-                MPI_Send(bh, 1, send_types[i], i, TAG_BH, MPI_COMM_WORLD);
-
-                MPI_Send(var,  1, send_types[i], i, TAG_VAR,  MPI_COMM_WORLD);
-                MPI_Send(su,   1, send_types[i], i, TAG_SU,   MPI_COMM_WORLD);
-                MPI_Send(cgup, 1, send_types[i], i, TAG_CGUP, MPI_COMM_WORLD);
+                MPI_Send(direc1, 1, send_types[i], i, TAG_DIR, MPI_COMM_WORLD);
 
             }
             if (recv_count[i] > 0) {
-                MPI_Recv(bp, 1, recv_types[i], i, TAG_BP, MPI_COMM_WORLD, &status);
-                MPI_Recv(bs, 1, recv_types[i], i, TAG_BS, MPI_COMM_WORLD, &status);
-                MPI_Recv(bw, 1, recv_types[i], i, TAG_BW, MPI_COMM_WORLD, &status);
-                MPI_Recv(bl, 1, recv_types[i], i, TAG_BL, MPI_COMM_WORLD, &status);
-                MPI_Recv(bn, 1, recv_types[i], i, TAG_BN, MPI_COMM_WORLD, &status);
-                MPI_Recv(be, 1, recv_types[i], i, TAG_BE, MPI_COMM_WORLD, &status);
-                MPI_Recv(bh, 1, recv_types[i], i, TAG_BH, MPI_COMM_WORLD, &status);
-
-                MPI_Recv(var,  1, recv_types[i], i, TAG_VAR,  MPI_COMM_WORLD, &status);
-                MPI_Recv(su,   1, recv_types[i], i, TAG_SU,   MPI_COMM_WORLD, &status);
-                MPI_Recv(cgup, 1, recv_types[i], i, TAG_CGUP, MPI_COMM_WORLD, &status);
+                MPI_Recv(direc1, 1, recv_types[i], i, TAG_DIR, MPI_COMM_WORLD, &status);
             }
         }
         // communication end
+
 
         // update the old values of direc
         for ( nc = nintci; nc <= nintcf; nc++ ) {
@@ -177,8 +194,8 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
                           MPI_DOUBLE, 
                           MPI_SUM, 
                           MPI_COMM_WORLD);
-
-            oc1 = global_occ / cnorm[1];
+            occ = global_occ;
+            oc1 = occ / cnorm[1];
             for ( nc = nintci; nc <= nintcf; nc++ ) {
                 direc2[nc] = direc2[nc] - oc1 * adxor1[nc];
                 direc1[nc] = direc1[nc] - oc1 * dxor1[nc];
@@ -196,7 +213,8 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
 
                 // communicate the global occ
                 MPI_Allreduce(&occ, &global_occ, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-                oc1 = global_occ / cnorm[1];
+                occ = global_occ;
+                oc1 = occ / cnorm[1];
 
                 oc2 = 0;
                 occ = 0;
@@ -205,7 +223,8 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
                 }
                 // communicate the global occ
                 MPI_Allreduce(&occ, &global_occ, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-                oc2 = global_occ / cnorm[2];
+                occ  = global_occ;
+                oc2 = occ / cnorm[2];
 
                 for ( nc = nintci; nc <= nintcf; nc++ ) {
                     direc2[nc] = direc2[nc] - oc1 * adxor1[nc] - oc2 * adxor2[nc];

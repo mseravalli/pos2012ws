@@ -20,6 +20,8 @@
 #define TAG_SU   110
 #define TAG_CGUP 120
 
+#define TAG_DIR 200
+
 int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf, int** lcc, double* bp,
                      double* bs, double* bw, double* bl, double* bn, double* be, double* bh,
                      double* cnorm, double* var, double *su, double* cgup, double* residual_ratio,

@@ -506,8 +506,9 @@ int initialization(char* file_in, char* part_type,
     // local values for lcc
     for (int i = 0; i < el_int_loc; ++i) {
         for (int j = 0; j < 6; ++j) {
-            if ((*lcc)[i][j] < el_int_tot) {
-                (*lcc)[i][j] = (*global_local_index)[(*lcc)[i][j]];
+            int li = (*local_global_index)[i];
+            if ((*lcc)[li][j] < el_int_tot) {
+                (*lcc)[i][j] = (*global_local_index)[(*lcc)[li][j]];
             } else {
                 (*lcc)[i][j] = el_int_loc + el_ext_loc;
             }
