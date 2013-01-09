@@ -108,50 +108,31 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     }
     // variables used for synchronization
     MPI_Status status;
+    MPI_Request* s_req = (MPI_Request*) calloc(size, sizeof(MPI_Request));
+    MPI_Request* r_req = (MPI_Request*) calloc(size, sizeof(MPI_Request));
     // communication initialization end
-
-    // communication start
-    for (int i = 0; i < size; ++i) {
-        if (send_count[i] > 0) {
-            MPI_Send(bp, 1, send_types[i], i, TAG_BP, MPI_COMM_WORLD);
-            MPI_Send(bs, 1, send_types[i], i, TAG_BS, MPI_COMM_WORLD);
-            MPI_Send(bw, 1, send_types[i], i, TAG_BW, MPI_COMM_WORLD);
-            MPI_Send(bl, 1, send_types[i], i, TAG_BL, MPI_COMM_WORLD);
-            MPI_Send(bn, 1, send_types[i], i, TAG_BN, MPI_COMM_WORLD);
-            MPI_Send(be, 1, send_types[i], i, TAG_BE, MPI_COMM_WORLD);
-            MPI_Send(bh, 1, send_types[i], i, TAG_BH, MPI_COMM_WORLD);
-
-            MPI_Send(var,  1, send_types[i], i, TAG_VAR,  MPI_COMM_WORLD);
-            MPI_Send(su,   1, send_types[i], i, TAG_SU,   MPI_COMM_WORLD);
-            MPI_Send(cgup, 1, send_types[i], i, TAG_CGUP, MPI_COMM_WORLD);
-
-        }
-        if (recv_count[i] > 0) {
-            MPI_Recv(bp, 1, recv_types[i], i, TAG_BP, MPI_COMM_WORLD, &status);
-            MPI_Recv(bs, 1, recv_types[i], i, TAG_BS, MPI_COMM_WORLD, &status);
-            MPI_Recv(bw, 1, recv_types[i], i, TAG_BW, MPI_COMM_WORLD, &status);
-            MPI_Recv(bl, 1, recv_types[i], i, TAG_BL, MPI_COMM_WORLD, &status);
-            MPI_Recv(bn, 1, recv_types[i], i, TAG_BN, MPI_COMM_WORLD, &status);
-            MPI_Recv(be, 1, recv_types[i], i, TAG_BE, MPI_COMM_WORLD, &status);
-            MPI_Recv(bh, 1, recv_types[i], i, TAG_BH, MPI_COMM_WORLD, &status);
-
-            MPI_Recv(var,  1, recv_types[i], i, TAG_VAR,  MPI_COMM_WORLD, &status);
-            MPI_Recv(su,   1, recv_types[i], i, TAG_SU,   MPI_COMM_WORLD, &status);
-            MPI_Recv(cgup, 1, recv_types[i], i, TAG_CGUP, MPI_COMM_WORLD, &status);
-        }
-    }
-    // communication end
 
     while ( iter < max_iters ) {
         /**********  START COMP PHASE 1 **********/
         // communication start
         for (int i = 0; i < size; ++i) {
-            if (send_count[i] > 0) {
-                MPI_Send(direc1, 1, send_types[i], i, TAG_DIR, MPI_COMM_WORLD);
-
-            }
             if (recv_count[i] > 0) {
-                MPI_Recv(direc1, 1, recv_types[i], i, TAG_DIR, MPI_COMM_WORLD, &status);
+                MPI_Irecv(direc1, 1, recv_types[i], i, TAG_DIR, MPI_COMM_WORLD, &(r_req[i]));
+            }
+        }
+        for (int i = 0; i < size; ++i) {
+            if (send_count[i] > 0) {
+                MPI_Isend(direc1, 1, send_types[i], i, TAG_DIR, MPI_COMM_WORLD, &(s_req[i]));
+            }
+        }
+        for (int i = 0; i < size; ++i) {
+            if (send_count[i] > 0) {
+                MPI_Wait(&(s_req[i]), &status);
+            }
+        }
+        for (int i = 0; i < size; ++i) {
+            if (recv_count[i] > 0) {
+                MPI_Wait(&(r_req[i]), &status);
             }
         }
         // communication end
