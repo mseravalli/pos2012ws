@@ -15,13 +15,13 @@
 #include "initialization.h"
 
 int dual_partition(char* part_type,
-              int el_int_tot, int points_count,
+              int el_int_glob, int points_count,
               int* elems,
               idx_t ncommon, idx_t nparts,
               idx_t* objval, idx_t** epart, idx_t** npart) {
     int result = METIS_OK;
 
-    idx_t ne = el_int_tot;
+    idx_t ne = el_int_glob;
     idx_t nn = points_count;
 
     idx_t* eptr = malloc((ne + 1) * sizeof(idx_t));
@@ -61,13 +61,13 @@ int dual_partition(char* part_type,
 }
 
 int nodal_partition(char* part_type,
-              int el_int_tot, int points_count,
+              int el_int_glob, int points_count,
               int* elems,
               idx_t ncommon, idx_t nparts,
               idx_t* objval, idx_t** epart, idx_t** npart) {
     int result = METIS_OK;
 
-    idx_t ne = el_int_tot;
+    idx_t ne = el_int_glob;
     idx_t nn = points_count;
 
     idx_t* eptr = malloc((ne + 1) * sizeof(idx_t));
@@ -107,18 +107,18 @@ int nodal_partition(char* part_type,
 }
 
 int classical_partition(char* part_type,
-                        int el_int_tot, int points_count,
+                        int el_int_glob, int points_count,
                         int* elems,
                         idx_t ncommon, idx_t nparts,
                         idx_t* objval, idx_t** epart, idx_t** npart) {
     int result = 0;
 
-    *epart = malloc(el_int_tot * sizeof(idx_t));
+    *epart = malloc(el_int_glob * sizeof(idx_t));
     *npart = malloc(points_count * sizeof(idx_t));
 
-    int elems_per_part = (int) el_int_tot / nparts;
+    int elems_per_part = (int) el_int_glob / nparts;
 
-    for (int i = 0; i < el_int_tot; ++i) {
+    for (int i = 0; i < el_int_glob; ++i) {
         if ((i / elems_per_part) < nparts) {
             (*epart)[i] = (i / elems_per_part);
         } else {
@@ -135,7 +135,7 @@ int partition(char* file_in, char* part_type,
               double** bs, double** be, double** bn, double** bw,
               double** bl, double** bh, double** bp, double** su,
               int* points_count, int*** points,
-              int* el_int_tot, int** elems,
+              int* el_int_glob, int** elems,
               int** part_elems,
               idx_t** epart, idx_t** npart, idx_t* objval) {
     // read-in the input file
@@ -154,23 +154,23 @@ int partition(char* file_in, char* part_type,
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     idx_t nparts = (idx_t) size;
 
-    *el_int_tot = (*nintcf - *nintci) + 1;
+    *el_int_glob = (*nintcf - *nintci) + 1;
 
     if (strcmp(part_type, "dual") == 0) {
         part_result = dual_partition(part_type,
-                                     *el_int_tot, *points_count,
+                                     *el_int_glob, *points_count,
                                      *elems,
                                      ncommon, nparts,
                                      objval, epart, npart);
     } else if (strcmp(part_type, "nodal") == 0) {
         part_result = nodal_partition(part_type,
-                                      *el_int_tot, *points_count,
+                                      *el_int_glob, *points_count,
                                       *elems,
                                       ncommon, nparts,
                                       objval, epart, npart);
     } else {
         part_result = classical_partition(part_type,
-                                          *el_int_tot, *points_count,
+                                          *el_int_glob, *points_count,
                                           *elems,
                                           ncommon, nparts,
                                           objval, epart, npart);
@@ -181,8 +181,8 @@ int partition(char* file_in, char* part_type,
         return -1;
     }
 
-    *part_elems = calloc(*el_int_tot, sizeof(int));
-    for (int i = 0; i < *el_int_tot; ++i) {
+    *part_elems = calloc(*el_int_glob, sizeof(int));
+    for (int i = 0; i < *el_int_glob; ++i) {
         (*part_elems)[i] = (*epart)[i];
     }
 
@@ -192,12 +192,12 @@ int partition(char* file_in, char* part_type,
     return part_result;
 }
 
-int build_global_local(int el_int_tot, int* part_elems,
+int build_global_local(int el_int_glob, int* part_elems,
                        int* recv_count, int** recv_list,
                        int* el_int_loc,
                        int* el_ext_loc,
                        int** global_local) {
-    *global_local = (int*) calloc(el_int_tot, sizeof(int));
+    *global_local = (int*) calloc(el_int_glob, sizeof(int));
     
     int my_rank = -1;
     int size = -1;
@@ -205,7 +205,7 @@ int build_global_local(int el_int_tot, int* part_elems,
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     int count = 0;
-    for (int i = 0; i < el_int_tot; ++i) {
+    for (int i = 0; i < el_int_glob; ++i) {
         if (part_elems[i] == my_rank) {
             (*global_local)[i] = count;
             ++count;
@@ -230,16 +230,16 @@ int build_global_local(int el_int_tot, int* part_elems,
     return 0;
 }
 
-int build_local_global(int el_int_tot, int* global_local, int** local_global) {
+int build_local_global(int el_int_glob, int* global_local, int** local_global) {
     int count = 0;
-    for (int i = 0; i < el_int_tot; ++i) {
+    for (int i = 0; i < el_int_glob; ++i) {
         if (global_local[i] != -1) {
             ++count;
         }
     }
 
     *local_global = (int*) calloc(count, sizeof(int));
-    for (int i = 0; i < el_int_tot; ++i) {
+    for (int i = 0; i < el_int_glob; ++i) {
         if (global_local[i] != -1) {
             (*local_global)[global_local[i]] = i;
         }
@@ -291,7 +291,7 @@ int remove_duplicates(int** array, int num, int* new_num) {
 /**
  * Initialize the communication lists
  */
-int init_commlist(int el_int_tot, int* part_elems, int** lcc,  // i,i,i
+int init_commlist(int el_int_glob, int* part_elems, int** lcc,  // i,i,i
                   int* neighbors_count,                        // o
                   int** send_count, int*** send_list,          // o, o
                   int** recv_count, int*** recv_list) {        // o, o
@@ -311,7 +311,7 @@ int init_commlist(int el_int_tot, int* part_elems, int** lcc,  // i,i,i
     }
 
     // count the cells to send
-    for (int i = 0; i < el_int_tot; ++i) {
+    for (int i = 0; i < el_int_glob; ++i) {
         // if the element is not owned my the current processor skip it
         if (part_elems[i] != my_rank) {
             continue;
@@ -324,7 +324,7 @@ int init_commlist(int el_int_tot, int* part_elems, int** lcc,  // i,i,i
          */
         for (int j = 0; j < 6; ++j) {
             int l = lcc[i][j];
-            if (l < el_int_tot) {
+            if (l < el_int_glob) {
                 int p = (int) part_elems[l];
                 if (p != my_rank) {
                     ++((*send_count)[p]);
@@ -367,13 +367,13 @@ int init_commlist(int el_int_tot, int* part_elems, int** lcc,  // i,i,i
     }
 
     // initalize the lists
-    for (int i = 0; i < el_int_tot; ++i) {
+    for (int i = 0; i < el_int_glob; ++i) {
         if (part_elems[i] != my_rank) {
             continue;
         }
         for (int j = 0; j < 6; ++j) {
             int l = lcc[i][j];
-            if (l < el_int_tot) {
+            if (l < el_int_glob) {
                 int p = (int) part_elems[l];
                 if (p != my_rank) {
                     (*send_list)[p][s_list_progr[p]] = i;
@@ -416,7 +416,7 @@ int distr_shrink(int* local_global,
     int result = 0;
 
     double* tmp = (double*) calloc(el_int_loc + el_ext_loc + 1, sizeof(double));
-    for (int i = 0; i < el_int_loc; ++i) {
+    for (int i = 0; i < el_int_loc + el_ext_loc; ++i) {
         tmp[i] = (*array)[local_global[i]];
     }
     tmp[el_int_loc + el_ext_loc] = 0;
@@ -442,7 +442,7 @@ int initialization(char* file_in, char* part_type,
     /********** START INITIALIZATION **********/
     int i = 0;
     int el_int_loc = 0;
-    int el_int_tot = 0;
+    int el_int_glob = 0;
     int el_ext_loc = 0;
 
     int size, my_rank;
@@ -456,11 +456,11 @@ int initialization(char* file_in, char* part_type,
     if (my_rank == 0) {
         part_res =  partition(file_in, part_type, nintci, nintcf, nextci, nextcf,
                               lcc, bs, be, bn, bw, bl, bh, bp, su,
-                              points_count, points, &el_int_tot, elems,
+                              points_count, points, &el_int_glob, elems,
                               &part_elems, epart, npart, objval);
     }
 
-    MPI_Bcast(&el_int_tot, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&el_int_glob, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(points_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(nintcf, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(nextci, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -468,19 +468,19 @@ int initialization(char* file_in, char* part_type,
 
     // init arrays before receiving them
     if (my_rank != 0) {
-        part_elems = (int*) calloc(el_int_tot, sizeof(int));
-        *elems = (int*) malloc(el_int_tot * 8 * sizeof(int));
-        *lcc  = (int**) malloc(el_int_tot * sizeof(int*));
-        **lcc = (int*)  malloc(el_int_tot * 6 * sizeof(int));
+        part_elems = (int*) calloc(el_int_glob, sizeof(int));
+        *elems = (int*) malloc(el_int_glob * 8 * sizeof(int));
+        *lcc  = (int**) malloc(el_int_glob * sizeof(int*));
+        **lcc = (int*)  malloc(el_int_glob * 6 * sizeof(int));
         *points  = (int**) malloc(*points_count * sizeof(int*));
         **points = (int*)  malloc(*points_count * 3 * sizeof(int));
     }
 
     // broadcast the necessary arrays that do not need to be partitioned
-    MPI_Bcast(part_elems, el_int_tot, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*elems, el_int_tot * 8, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(**lcc, el_int_tot * 6, MPI_INT, 0, MPI_COMM_WORLD);
-    for (i = 0; i < el_int_tot; ++i) {
+    MPI_Bcast(part_elems, el_int_glob, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(*elems, el_int_glob * 8, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(**lcc, el_int_glob * 6, MPI_INT, 0, MPI_COMM_WORLD);
+    for (i = 0; i < el_int_glob; ++i) {
         (*lcc)[i] = &((**lcc)[i * 6]);
     }
     MPI_Bcast(**points, *points_count * 3, MPI_INT, 0, MPI_COMM_WORLD);
@@ -489,25 +489,25 @@ int initialization(char* file_in, char* part_type,
     }
 
     // set up communication
-    init_commlist(el_int_tot, part_elems,
+    init_commlist(el_int_glob, part_elems,
                   *lcc,
                   neighbors_count,
                   send_count, send_list,
                   recv_count, recv_list);
     
-    build_global_local(el_int_tot, part_elems,
+    build_global_local(el_int_glob, part_elems,
                        *recv_count, *recv_list,
                        &el_int_loc,
                        &el_ext_loc,
                        global_local_index);
   
-    build_local_global(el_int_tot, *global_local_index, local_global_index);
+    build_local_global(el_int_glob, *global_local_index, local_global_index);
     
     // local values for lcc
     for (int i = 0; i < el_int_loc; ++i) {
         for (int j = 0; j < 6; ++j) {
             int li = (*local_global_index)[i];
-            if ((*lcc)[li][j] < el_int_tot) {
+            if ((*lcc)[li][j] < el_int_glob) {
                 (*lcc)[i][j] = (*global_local_index)[(*lcc)[li][j]];
             } else {
                 (*lcc)[i][j] = el_int_loc + el_ext_loc;
@@ -536,7 +536,7 @@ int initialization(char* file_in, char* part_type,
     *var = (double*) calloc((*nextcf) + 1, sizeof(double));
     *cgup = (double*) calloc((*nextcf) + 1, sizeof(double));
     if (my_rank == 0) {
-        for (i = 0; i < el_int_tot; ++i) {
+        for (i = 0; i < el_int_glob; ++i) {
             (*cgup)[i] = 0.0;
             (*var)[i] = 0.0;
         }
