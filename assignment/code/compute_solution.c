@@ -144,7 +144,6 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         }
 
         // compute new guess (approximation) for direc
-        // TODO: put < instead of <= ??
         for ( nc = nintci; nc <= nintcf; nc++ ) {
             direc2[nc] = bp[nc] * direc1[nc] -
                          bs[nc] * direc1[lcc[nc][0]] -

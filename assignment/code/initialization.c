@@ -156,13 +156,13 @@ int partition(char* file_in, char* part_type,
 
     *el_int_glob = (*nintcf - *nintci) + 1;
 
-    if (strcmp(part_type, "dual") == 0) {
+    if (strcmp(part_type, "dual") == 0 && size > 1) {
         part_result = dual_partition(part_type,
                                      *el_int_glob, *points_count,
                                      *elems,
                                      ncommon, nparts,
                                      objval, epart, npart);
-    } else if (strcmp(part_type, "nodal") == 0) {
+    } else if (strcmp(part_type, "nodal") == 0 && size > 1) {
         part_result = nodal_partition(part_type,
                                       *el_int_glob, *points_count,
                                       *elems,
@@ -388,19 +388,19 @@ int init_commlist(int el_int_glob, int* part_elems, int** lcc,  // i,i,i
     free(s_list_progr);
     free(r_list_progr);
 
-    // remove duplicates
-        for (int i = 0; i < size; ++i) {
-        if ((*send_count)[i] > 0) {
-            remove_duplicates(&((*send_list)[i]), 
-                              (*send_count)[i], 
-                              &((*send_count)[i]));
-        }
-        if ((*recv_count)[i] > 0) {
-            remove_duplicates(&((*recv_list)[i]), 
-                              (*recv_count)[i],
-                              &((*recv_count)[i]));
-        }
-    }
+//  // remove duplicates
+//      for (int i = 0; i < size; ++i) {
+//      if ((*send_count)[i] > 0) {
+//          remove_duplicates(&((*send_list)[i]), 
+//                            (*send_count)[i], 
+//                            &((*send_count)[i]));
+//      }
+//      if ((*recv_count)[i] > 0) {
+//          remove_duplicates(&((*recv_list)[i]), 
+//                            (*recv_count)[i],
+//                            &((*recv_count)[i]));
+//      }
+//  }
 
     return result;
 }
@@ -505,8 +505,8 @@ int initialization(char* file_in, char* part_type,
     
     // local values for lcc
     for (int i = 0; i < el_int_loc; ++i) {
+        int li = (*local_global_index)[i];
         for (int j = 0; j < 6; ++j) {
-            int li = (*local_global_index)[i];
             if ((*lcc)[li][j] < el_int_glob) {
                 (*lcc)[i][j] = (*global_local_index)[(*lcc)[li][j]];
             } else {
