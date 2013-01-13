@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     char file_vtk_out[256];
     sprintf(file_vtk_out, "%s_%s_proc%d.vtk", out_prefix, part_type, my_rank);
 
-    if (my_rank == 3) {
+    if (my_rank == 1) {
         // Implement this function in test_functions.c and call it here
 //      test_distribution(file_in, file_vtk_out, local_global_index,
 //                        nintcf, cgup);

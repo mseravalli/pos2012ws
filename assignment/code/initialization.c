@@ -504,16 +504,26 @@ int initialization(char* file_in, char* part_type,
     build_local_global(el_int_glob, *global_local_index, local_global_index);
     
     // local values for lcc
+    int** tmp_lcc;
+    tmp_lcc  = (int**) malloc(el_int_glob * sizeof(int*));
+    *tmp_lcc = (int*)  malloc(el_int_glob * 6 * sizeof(int));
+    for (i = 0; i < el_int_glob; ++i) {
+        (tmp_lcc)[i] = &((*tmp_lcc)[i * 6]);
+    }
     for (int i = 0; i < el_int_loc; ++i) {
         int li = (*local_global_index)[i];
         for (int j = 0; j < 6; ++j) {
             if ((*lcc)[li][j] < el_int_glob) {
-                (*lcc)[i][j] = (*global_local_index)[(*lcc)[li][j]];
+                (tmp_lcc)[i][j] = (*global_local_index)[(*lcc)[li][j]];
             } else {
-                (*lcc)[i][j] = el_int_loc + el_ext_loc;
+                (tmp_lcc)[i][j] = el_int_loc + el_ext_loc;
             }
         }
     }
+    free((*lcc)[0]);
+    free(*lcc);
+    *lcc = tmp_lcc;
+    **lcc = tmp_lcc[0];
 
     // local values for send and recv list
     for (int i = 0; i < size; ++i) { 
