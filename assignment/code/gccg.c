@@ -34,6 +34,9 @@ int main(int argc, char *argv[]) {
     double *bp;    /// Pole coefficient
     double *su = NULL;    /// Source values
 
+    double* original_b;
+    int** original_lcc;
+
     double residual_ratio = 100000;  /// the ratio between the reference and
                                      /// the current residual
     double *var;    /// the variation vector -> keeps the result in the end
@@ -93,7 +96,8 @@ int main(int argc, char *argv[]) {
                                      &neighbors_count,
                                      &send_count, &send_list,
                                      &recv_count, &recv_list,
-                                     &epart, &npart, &objval);
+                                     &epart, &npart, &objval, 
+                                     &original_b, &original_lcc);
 
     if ( init_status != 0 ) {
         fprintf(stderr, "Failed to initialize data!\n");
@@ -123,7 +127,8 @@ int main(int argc, char *argv[]) {
                                    local_global_index, global_local_index,
                                    neighbors_count,
                                    send_count, send_list,
-                                   recv_count, recv_list);
+                                   recv_count, recv_list,
+                                   original_b, original_lcc);
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/

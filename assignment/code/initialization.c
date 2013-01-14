@@ -367,19 +367,29 @@ int init_commlist(int el_int_glob, int* part_elems, int** lcc,  // i,i,i
     }
 
     // initalize the lists
-    for (int i = 0; i < el_int_glob; ++i) {
-        if (part_elems[i] != my_rank) {
-            continue;
-        }
-        for (int j = 0; j < 6; ++j) {
-            int l = lcc[i][j];
-            if (l < el_int_glob) {
-                int p = (int) part_elems[l];
-                if (p != my_rank) {
-                    (*send_list)[p][s_list_progr[p]] = i;
-                    ++(s_list_progr[p]);
-                    (*recv_list)[p][r_list_progr[p]] = l;
-                    ++(r_list_progr[p]);
+    for (int r = 0; r < size; ++r) {
+        for (int i = 0; i < el_int_glob; ++i) {
+            if (part_elems[i] == my_rank && r == my_rank) {
+                for (int j = 0; j < 6; ++j) {
+                    int l = lcc[i][j];
+                    if (l < el_int_glob) {
+                        int p = (int) part_elems[l];
+                        if (p != my_rank) {
+                            (*send_list)[p][s_list_progr[p]] = i;
+                            ++(s_list_progr[p]);
+                        }
+                    }
+                }
+            } else if (part_elems[i] == r && r != my_rank){
+                for (int j = 0; j < 6; ++j) {
+                    int l = lcc[i][j];
+                    if (l < el_int_glob) {
+                        int p = (int) part_elems[i];
+                        if (part_elems[l] == my_rank) {
+                            (*recv_list)[p][r_list_progr[p]] = i;
+                            ++(r_list_progr[p]);
+                        }
+                    }
                 }
             }
         }
@@ -420,7 +430,7 @@ int distr_shrink(int* local_global,
         tmp[i] = (*array)[local_global[i]];
     }
     tmp[el_int_loc + el_ext_loc] = 0;
-    free(*array);
+//    free(*array);
     *array = tmp;
 
     return result;
@@ -438,7 +448,8 @@ int initialization(char* file_in, char* part_type,
                    int* neighbors_count,
                    int** send_count, int*** send_list,
                    int** recv_count, int*** recv_list,
-                   idx_t** epart, idx_t** npart, idx_t* objval) {
+                   idx_t** epart, idx_t** npart, idx_t* objval,
+                   double** original_b, int*** original_lcc) {
     /********** START INITIALIZATION **********/
     int i = 0;
     int el_int_loc = 0;
@@ -520,8 +531,10 @@ int initialization(char* file_in, char* part_type,
             }
         }
     }
-    free((*lcc)[0]);
-    free(*lcc);
+//  free((*lcc)[0]);
+//  free(*lcc);
+    *original_lcc = *lcc;
+    *original_lcc[0] = *lcc[0];
     *lcc = tmp_lcc;
     **lcc = tmp_lcc[0];
 
@@ -583,6 +596,8 @@ int initialization(char* file_in, char* part_type,
     MPI_Bcast(*su, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*cgup, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(*var, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    *original_b = *bs;
 
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bs);
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, be);

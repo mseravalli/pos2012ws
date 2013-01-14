@@ -20,13 +20,15 @@
 #define TAG_SU   110
 #define TAG_CGUP 120
 
-#define TAG_DIR 200
+#define TAG_DIR1 200
+#define TAG_DIR2 200
 
 int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf, int** lcc, double* bp,
                      double* bs, double* bw, double* bl, double* bn, double* be, double* bh,
                      double* cnorm, double* var, double *su, double* cgup, double* residual_ratio,
                      int* local_global_index, int* global_local_index, int neighbors_count,
-                     int* send_count, int** send_list, int* recv_count, int** recv_list);
+                     int* send_count, int** send_list, int* recv_count, int** recv_list,
+                     double* original_b, int** original_lcc);
 
 #endif /* COMPUTE_SOLUTION_H_ */
 

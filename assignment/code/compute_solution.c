@@ -19,7 +19,8 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
                      double* residual_ratio, int* local_global_index, 
                      int* global_local_index, int neighbors_count,
                      int* send_count, int** send_list, 
-                     int* recv_count, int** recv_list) {
+                     int* recv_count, int** recv_list,
+                     double* original_b, int** original_lcc) {
     //TODO: be sure that the following statements do not crash everything
     --nintcf;
 
@@ -114,15 +115,21 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
 
     while ( iter < max_iters ) {
         /**********  START COMP PHASE 1 **********/
+
+        // update the old values of direc
+        for ( nc = nintci; nc <= nintcf; nc++ ) {
+            direc1[nc] = direc1[nc] + resvec[nc] * cgup[nc];
+        }
+
         // communication start
         for (int i = 0; i < size; ++i) {
             if (recv_count[i] > 0) {
-                MPI_Irecv(direc1, 1, recv_types[i], i, TAG_DIR, MPI_COMM_WORLD, &(r_req[i]));
+                MPI_Irecv(direc1, 1, recv_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(r_req[i]));
             }
         }
         for (int i = 0; i < size; ++i) {
             if (send_count[i] > 0) {
-                MPI_Isend(direc1, 1, send_types[i], i, TAG_DIR, MPI_COMM_WORLD, &(s_req[i]));
+                MPI_Isend(direc1, 1, send_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(s_req[i]));
             }
         }
         for (int i = 0; i < size; ++i) {
@@ -137,11 +144,6 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         }
         // communication end
 
-
-        // update the old values of direc
-        for ( nc = nintci; nc <= nintcf; nc++ ) {
-            direc1[nc] = direc1[nc] + resvec[nc] * cgup[nc];
-        }
 
         // compute new guess (approximation) for direc
         for ( nc = nintci; nc <= nintcf; nc++ ) {
