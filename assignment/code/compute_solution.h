@@ -27,8 +27,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf, in
                      double* bs, double* bw, double* bl, double* bn, double* be, double* bh,
                      double* cnorm, double* var, double *su, double* cgup, double* residual_ratio,
                      int* local_global_index, int* global_local_index, int neighbors_count,
-                     int* send_count, int** send_list, int* recv_count, int** recv_list,
-                     double* original_b, int** original_lcc);
+                     int* send_count, int** send_list, int* recv_count, int** recv_list);
 
 #endif /* COMPUTE_SOLUTION_H_ */
 
