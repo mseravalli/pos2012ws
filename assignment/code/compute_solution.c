@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <mpi.h>
+#include "scorep/SCOREP_User.h"
+
 
 #include "compute_solution.h"
 
@@ -112,7 +114,11 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     MPI_Request* r_req = (MPI_Request*) calloc(size, sizeof(MPI_Request));
     // communication initialization end
 
+    SCOREP_USER_REGION_DEFINE(OA_Phase);
+
     while ( iter < max_iters ) {
+        SCOREP_USER_OA_PHASE_BEGIN(OA_Phase,"OA_Phase", SCOREP_USER_REGION_TYPE_COMMON)
+
         /**********  START COMP PHASE 1 **********/
 
         // update the old values of direc
@@ -280,6 +286,8 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         }
         nor1 = nor - 1;
         /********** END COMP PHASE 2 **********/
+
+        SCOREP_USER_OA_PHASE_END(OA_Phase)
     }
 
     free(resvec);
