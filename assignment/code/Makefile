@@ -4,7 +4,9 @@
 #                                                                  #
 ####################################################################
 
-CC = mpicc
+PREP = scorep --user
+
+CC = $(PREP) mpicc
 CFLAGS = -Wall -g -std=c99 $(METIS_INC)
 LIBS = $(METIS_LIB) -lmetis -lm 
 

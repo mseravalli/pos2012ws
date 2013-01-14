@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <mpi.h>
+#include "scorep/SCOREP_User.h"
+
 
 #include "compute_solution.h"
 
@@ -122,7 +124,11 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         }
     }
 
+    SCOREP_USER_REGION_DEFINE(OA_Phase);
+
     while ( iter < max_iters ) {
+        SCOREP_USER_OA_PHASE_BEGIN(OA_Phase,"OA_Phase", SCOREP_USER_REGION_TYPE_COMMON)
+
         /**********  START COMP PHASE 1 **********/
 
         // communication start
@@ -292,6 +298,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         double* tmp = direc1_next;
         direc1_next = direc1_curr;
         direc1_curr = tmp;
+        SCOREP_USER_OA_PHASE_END(OA_Phase)
     }
 
     // communication start
