@@ -20,7 +20,6 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
                      int* global_local_index, int neighbors_count,
                      int* send_count, int** send_list, 
                      int* recv_count, int** recv_list) {
-    //TODO: be sure that the following statements do not crash everything
     --nintcf;
 
     int iter = 1;
@@ -59,7 +58,8 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     }
 
     /** the computation vectors */
-    double *direc1 = (double *) calloc(sizeof(double), (nextcf + 1));
+    double *direc1_curr = (double *) calloc(sizeof(double), (nextcf + 1));
+    double *direc1_next = (double *) calloc(sizeof(double), (nextcf + 1));
     double *direc2 = (double *) calloc(sizeof(double), (nextcf + 1));
     double *adxor1 = (double *) calloc(sizeof(double), (nintcf + 1));
     double *adxor2 = (double *) calloc(sizeof(double), (nintcf + 1));
@@ -67,7 +67,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     double *dxor2 = (double *) calloc(sizeof(double), (nintcf + 1));
 
     for (int i = 0; i <= nextcf; ++i) {
-        direc1[i] = 0;
+        direc1_curr[i] = 0;
         direc2[i] = 0;
     }
 
@@ -112,23 +112,23 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     MPI_Request* r_req = (MPI_Request*) calloc(size, sizeof(MPI_Request));
     // communication initialization end
 
+    // update the old values of direc
+    for ( nc = nintci; nc <= nintcf; nc++ ) {
+        direc1_curr[nc] = direc1_curr[nc] + resvec[nc] * cgup[nc];
+    }
+    for (int i = 0; i < size; ++i) {
+        if (send_count[i] > 0) {
+            MPI_Isend(direc1_curr, 1, send_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(s_req[i]));
+        }
+    }
+
     while ( iter < max_iters ) {
         /**********  START COMP PHASE 1 **********/
-
-        // update the old values of direc
-        for ( nc = nintci; nc <= nintcf; nc++ ) {
-            direc1[nc] = direc1[nc] + resvec[nc] * cgup[nc];
-        }
 
         // communication start
         for (int i = 0; i < size; ++i) {
             if (recv_count[i] > 0) {
-                MPI_Irecv(direc1, 1, recv_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(r_req[i]));
-            }
-        }
-        for (int i = 0; i < size; ++i) {
-            if (send_count[i] > 0) {
-                MPI_Isend(direc1, 1, send_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(s_req[i]));
+                MPI_Irecv(direc1_curr, 1, recv_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(r_req[i]));
             }
         }
         for (int i = 0; i < size; ++i) {
@@ -146,13 +146,13 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
 
         // compute new guess (approximation) for direc
         for ( nc = nintci; nc <= nintcf; nc++ ) {
-            direc2[nc] = bp[nc] * direc1[nc] -
-                         bs[nc] * direc1[lcc[nc][0]] -
-                         bw[nc] * direc1[lcc[nc][3]] -
-                         bl[nc] * direc1[lcc[nc][4]] -
-                         bn[nc] * direc1[lcc[nc][2]] -
-                         be[nc] * direc1[lcc[nc][1]] -
-                         bh[nc] * direc1[lcc[nc][5]];
+            direc2[nc] = bp[nc] * direc1_curr[nc] -
+                         bs[nc] * direc1_curr[lcc[nc][0]] -
+                         bw[nc] * direc1_curr[lcc[nc][3]] -
+                         bl[nc] * direc1_curr[lcc[nc][4]] -
+                         bn[nc] * direc1_curr[lcc[nc][2]] -
+                         be[nc] * direc1_curr[lcc[nc][1]] -
+                         bh[nc] * direc1_curr[lcc[nc][5]];
         }
         /********** END COMP PHASE 1 **********/
 
@@ -179,7 +179,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
             oc1 = occ / cnorm[1];
             for ( nc = nintci; nc <= nintcf; nc++ ) {
                 direc2[nc] = direc2[nc] - oc1 * adxor1[nc];
-                direc1[nc] = direc1[nc] - oc1 * dxor1[nc];
+                direc1_curr[nc] = direc1_curr[nc] - oc1 * dxor1[nc];
             }
 
             if1++;
@@ -209,7 +209,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
 
                 for ( nc = nintci; nc <= nintcf; nc++ ) {
                     direc2[nc] = direc2[nc] - oc1 * adxor1[nc] - oc2 * adxor2[nc];
-                    direc1[nc] = direc1[nc] - oc1 * dxor1[nc] - oc2 * dxor2[nc];
+                    direc1_curr[nc] = direc1_curr[nc] - oc1 * dxor1[nc] - oc2 * dxor2[nc];
                 }
 
                 if2++;
@@ -236,9 +236,18 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         double res_updated = 0.0;
         double global_res = 0.0;
         for ( nc = nintci; nc <= nintcf; nc++ ) {
-            var[nc] = var[nc] + omega * direc1[nc];
+            var[nc] = var[nc] + omega * direc1_curr[nc];
             resvec[nc] = resvec[nc] - omega * direc2[nc];
             res_updated = res_updated + resvec[nc] * resvec[nc];
+        }
+        // update the old values of direc
+        for ( nc = nintci; nc <= nintcf; nc++ ) {
+            direc1_next[nc] = direc1_curr[nc] + resvec[nc] * cgup[nc];
+        }
+        for (int i = 0; i < size; ++i) {
+            if (send_count[i] > 0) {
+                MPI_Isend(direc1_next, 1, send_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(s_req[i]));
+            }
         }
 
         // communicate the residual
@@ -264,13 +273,13 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         } else {
             if ( nor == 1 ) {
                 for ( nc = nintci; nc <= nintcf; nc++ ) {
-                    dxor1[nc] = direc1[nc];
+                    dxor1[nc] = direc1_curr[nc];
                     adxor1[nc] = direc2[nc];
                 }
             } else {
                 if ( nor == 2 ) {
                     for ( nc = nintci; nc <= nintcf; nc++ ) {
-                        dxor2[nc] = direc1[nc];
+                        dxor2[nc] = direc1_curr[nc];
                         adxor2[nc] = direc2[nc];
                     }
                 }
@@ -280,10 +289,32 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         }
         nor1 = nor - 1;
         /********** END COMP PHASE 2 **********/
+        double* tmp = direc1_next;
+        direc1_next = direc1_curr;
+        direc1_curr = tmp;
     }
 
+    // communication start
+    for (int i = 0; i < size; ++i) {
+        if (recv_count[i] > 0) {
+            MPI_Irecv(direc1_curr, 1, recv_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(r_req[i]));
+        }
+    }
+    for (int i = 0; i < size; ++i) {
+        if (send_count[i] > 0) {
+            MPI_Wait(&(s_req[i]), &status);
+        }
+    }
+    for (int i = 0; i < size; ++i) {
+        if (recv_count[i] > 0) {
+            MPI_Wait(&(r_req[i]), &status);
+        }
+    }
+    // communication end
+
     free(resvec);
-    free(direc1);
+    free(direc1_curr);
+    free(direc1_next);
     free(direc2);
     free(adxor1);
     free(adxor2);
