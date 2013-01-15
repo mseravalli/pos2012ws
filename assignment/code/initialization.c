@@ -464,40 +464,10 @@ int initialization(char* file_in, char* part_type,
     int part_res = -1;
     int* part_elems = NULL;
     // perform partition only on proc 0
-    if (my_rank == 0) {
-        part_res =  partition(file_in, part_type, nintci, nintcf, nextci, nextcf,
-                              lcc, bs, be, bn, bw, bl, bh, bp, su,
-                              points_count, points, &el_int_glob, elems,
-                              &part_elems, epart, npart, objval);
-    }
-
-    MPI_Bcast(&el_int_glob, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(points_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(nintcf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(nextci, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(nextcf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    // init arrays before receiving them
-    if (my_rank != 0) {
-        part_elems = (int*) calloc(el_int_glob, sizeof(int));
-        *elems = (int*) malloc(el_int_glob * 8 * sizeof(int));
-        *lcc  = (int**) malloc(el_int_glob * sizeof(int*));
-        **lcc = (int*)  malloc(el_int_glob * 6 * sizeof(int));
-        *points  = (int**) malloc(*points_count * sizeof(int*));
-        **points = (int*)  malloc(*points_count * 3 * sizeof(int));
-    }
-
-    // broadcast the necessary arrays that do not need to be partitioned
-    MPI_Bcast(part_elems, el_int_glob, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*elems, el_int_glob * 8, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(**lcc, el_int_glob * 6, MPI_INT, 0, MPI_COMM_WORLD);
-    for (i = 0; i < el_int_glob; ++i) {
-        (*lcc)[i] = &((**lcc)[i * 6]);
-    }
-    MPI_Bcast(**points, *points_count * 3, MPI_INT, 0, MPI_COMM_WORLD);
-    for (i = 0; i < *points_count; ++i) {
-        (*points)[i] = &((**points)[i * 3]);
-    }
+    part_res =  partition(file_in, part_type, nintci, nintcf, nextci, nextcf,
+                          lcc, bs, be, bn, bw, bl, bh, bp, su,
+                          points_count, points, &el_int_glob, elems,
+                          &part_elems, epart, npart, objval);
 
     // set up communication
     init_commlist(el_int_glob, part_elems,
@@ -556,44 +526,22 @@ int initialization(char* file_in, char* part_type,
 
     *var = (double*) calloc((*nextcf) + 1, sizeof(double));
     *cgup = (double*) calloc((*nextcf) + 1, sizeof(double));
-    if (my_rank == 0) {
-        for (i = 0; i < el_int_glob; ++i) {
-            (*cgup)[i] = 0.0;
-            (*var)[i] = 0.0;
-        }
-        for (i = (*nextci); i <= (*nextcf); i++) {
-            (*var)[i] = 0.0;
-            (*cgup)[i] = 0.0;
-            (*bs)[i] = 0.0;
-            (*be)[i] = 0.0;
-            (*bn)[i] = 0.0;
-            (*bw)[i] = 0.0;
-            (*bl)[i] = 0.0;
-            (*bh)[i] = 0.0;
-        }
-        for (i = 0; i <= (*nintcf); i++)
-            (*cgup)[i] = 1.0 / ((*bp)[i]);
-    } else {
-        *bs = (double*) calloc((*nextcf) + 1, sizeof(double));
-        *be = (double*) calloc((*nextcf) + 1, sizeof(double));
-        *bn = (double*) calloc((*nextcf) + 1, sizeof(double));
-        *bw = (double*) calloc((*nextcf) + 1, sizeof(double));
-        *bl = (double*) calloc((*nextcf) + 1, sizeof(double));
-        *bh = (double*) calloc((*nextcf) + 1, sizeof(double));
-        *bp = (double*) calloc((*nextcf) + 1, sizeof(double));
-        *su = (double*) calloc((*nextcf) + 1, sizeof(double));
+    for (i = 0; i < el_int_glob; ++i) {
+        (*cgup)[i] = 0.0;
+        (*var)[i] = 0.0;
     }
-    MPI_Bcast(*bs, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*be, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*bn, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*bw, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*bl, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*bh, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*bp, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    MPI_Bcast(*su, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*cgup, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(*var, (*nextcf) + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    for (i = (*nextci); i <= (*nextcf); i++) {
+        (*var)[i] = 0.0;
+        (*cgup)[i] = 0.0;
+        (*bs)[i] = 0.0;
+        (*be)[i] = 0.0;
+        (*bn)[i] = 0.0;
+        (*bw)[i] = 0.0;
+        (*bl)[i] = 0.0;
+        (*bh)[i] = 0.0;
+    }
+    for (i = 0; i <= (*nintcf); i++)
+        (*cgup)[i] = 1.0 / ((*bp)[i]);
 
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, bs);
     distr_shrink(*local_global_index, el_int_loc, el_ext_loc, be);
