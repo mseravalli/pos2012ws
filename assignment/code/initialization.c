@@ -14,7 +14,7 @@
 #include "util_read_files.h"
 #include "initialization.h"
 
-int dual_partition(char* part_type,
+int metis_partition(char* part_type,
               int el_int_glob, int points_count,
               int* elems,
               idx_t ncommon, idx_t nparts,
@@ -32,9 +32,6 @@ int dual_partition(char* part_type,
     idx_t options[METIS_NOPTIONS];
     METIS_SetDefaultOptions(options);
 
-    *epart = malloc(ne * sizeof(idx_t));
-    *npart = malloc(nn * sizeof(idx_t));
-
     // init eprt and eind
     for (int i = 0; i < ne + 1; ++i) {
         eptr[i] = (idx_t) (i * 8);
@@ -43,58 +40,24 @@ int dual_partition(char* part_type,
         eind[i] = (idx_t) elems[i];
     }
 
-    result = METIS_PartMeshDual(&ne, &nn,
-                                eptr, eind,
-                                vwgt, vsize,
-                                &ncommon, &nparts,
-                                tpwgts, options,
-                                objval, *epart, *npart);
+    if (strcmp(part_type, "dual") == 0) {
+        result = METIS_PartMeshDual(&ne, &nn,
+                                    eptr, eind,
+                                    vwgt, vsize,
+                                    &ncommon, &nparts,
+                                    tpwgts, options,
+                                    objval, *epart, *npart);
+    } else if (strcmp(part_type, "nodal") == 0) {
+        result = METIS_PartMeshNodal(&ne, &nn,
+                                     eptr, eind,
+                                     vwgt, vsize,
+                                     &nparts,
+                                     tpwgts, options,
+                                     objval, *epart, *npart);
 
-    if (result == METIS_OK) {
-        result = 0;
+    } else {
+        return -1;
     }
-
-    free(eptr);
-    free(eind);
-
-    return result;
-}
-
-int nodal_partition(char* part_type,
-              int el_int_glob, int points_count,
-              int* elems,
-              idx_t ncommon, idx_t nparts,
-              idx_t* objval, idx_t** epart, idx_t** npart) {
-    int result = METIS_OK;
-
-    idx_t ne = el_int_glob;
-    idx_t nn = points_count;
-
-    idx_t* eptr = malloc((ne + 1) * sizeof(idx_t));
-    idx_t* eind = malloc(ne * 8 * sizeof(idx_t));
-    idx_t* vwgt = NULL;
-    idx_t* vsize = NULL;
-    real_t* tpwgts = NULL;
-    idx_t options[METIS_NOPTIONS];
-    METIS_SetDefaultOptions(options);
-
-    *epart = malloc(ne * sizeof(idx_t));
-    *npart = malloc(nn * sizeof(idx_t));
-
-    // init eprt and eind
-    for (int i = 0; i < ne + 1; ++i) {
-        eptr[i] = (idx_t) (i * 8);
-    }
-    for (int i = 0; i < ne * 8; ++i) {
-        eind[i] = (idx_t) elems[i];
-    }
-
-    result = METIS_PartMeshNodal(&ne, &nn,
-                                 eptr, eind,
-                                 vwgt, vsize,
-                                 &nparts,
-                                 tpwgts, options,
-                                 objval, *epart, *npart);
 
     if (result == METIS_OK) {
         result = 0;
@@ -112,9 +75,6 @@ int classical_partition(char* part_type,
                         idx_t ncommon, idx_t nparts,
                         idx_t* objval, idx_t** epart, idx_t** npart) {
     int result = 0;
-
-    *epart = malloc(el_int_glob * sizeof(idx_t));
-    *npart = malloc(points_count * sizeof(idx_t));
 
     int elems_per_part = (int) el_int_glob / nparts;
 
@@ -156,18 +116,16 @@ int partition(char* file_in, char* part_type,
 
     *el_int_glob = (*nintcf - *nintci) + 1;
 
-    if (strcmp(part_type, "dual") == 0 && size > 1) {
-        part_result = dual_partition(part_type,
+    *epart = malloc((*el_int_glob) * sizeof(idx_t));
+    *npart = malloc((*points_count) * sizeof(idx_t));
+
+    if (size > 1 && 
+        (strcmp(part_type, "dual") == 0 || strcmp(part_type, "nodal") == 0)) {
+        part_result = metis_partition(part_type,
                                      *el_int_glob, *points_count,
                                      *elems,
                                      ncommon, nparts,
                                      objval, epart, npart);
-    } else if (strcmp(part_type, "nodal") == 0 && size > 1) {
-        part_result = nodal_partition(part_type,
-                                      *el_int_glob, *points_count,
-                                      *elems,
-                                      ncommon, nparts,
-                                      objval, epart, npart);
     } else {
         part_result = classical_partition(part_type,
                                           *el_int_glob, *points_count,
