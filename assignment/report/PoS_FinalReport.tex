@@ -69,29 +69,46 @@ for a specific problem under the threshold of 25\%.
   \subsection*{Communication model}
   For the communication model send and receive lists have been used in
   particular it has been necessary to guarantee that the received data was
-  actually received at the correct position.
+  actually received at the correct position. In addition to that lists for
+  knowing how many elements have to be sent and received from each processor are
+  initialized as well.
 
-  Once the communications lists were created the global to local index could be
-  created from those. The idea for this index was to first to see what elements
+  Once the communications lists are created the global to local index can be
+  created from those. The idea for this index is to first to see what elements
   do belong to a specific processor and assign them an incremental number. Then
-  during a successive traversal the ghost cells had been incrementally numbered.
+  during a successive traversal the ghost cells have incrementally numbered.
   The reason for such numbering is mainly due to the successive phase the
   building of the local to global index. In this index, we want to have the
   inner elements at the beginning of the array and the ghost cells at the end.
   Since the global to local index holds that specific structure it is
-  successively possible to initialize local_to_global (TODO: better formatting)
+  successively possible to initialize local to global (TODO: better formatting)
   in a single traversal as it can be seen in the following algorithm.
   TODO: show algo??
 
-  Eventually set the communication lists and lcc to local in order to be able to
-  operate with by applying only a minimum amount of changes in the original
-  code.
+  After having the indexes set it is also possible to modify the communication 
+  lists and the lcc array in order to have the local indexes of the elements. 
+  This allows to apply only a minimum amount of changes in the original code.
+  A further issue needs to be now solved, the external cells, i.e. the cells
+  outside the boundaries. The applications treats all these cells in the very
+  same way and their coefficients are always $0$. It follows that all the
+  information regarding these elements can be stored in a single position. This
+  is performed by making the coefficient arrays one element longer and storing a
+  this additional information in the last cell. Of course also lcc needs to be
+  modified accordingly, such that all the external cells point to the very same
+  position in the coefficient arrays.
 
   \subsection*{MPI implementation}
   For the MPI implementation different aspects should be taken into account:
   \begin{itemize}
-    \item Point to point operations
-    \item Asynchronous communication
+    \item Point to point operations: the communication among the different
+          processors is handled by point to point operations. In such scenario
+          every process sends the information only to another processor at a
+          time.
+    \item Asynchronous communication: if blocking point to point communication 
+          is used, deadlocks might occur. The reason is that the some processes
+          need to send data before being able to receive information, if it
+          happens that all processes communicate will all processes (there is a
+          clique), no process is actually 
     \item Indexed data
     \item Collective operations
   \end{itemize}
