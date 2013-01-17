@@ -4,11 +4,11 @@
 \usepackage[usenames,dvipsnames]{color}
 
 \title{----------------------------------------------------------- \\
-        {\bf Programming of Supercomputers WS11/12}\\ 
+        {\bf Programming of Supercomputers WS12/13}\\ 
         ----------------------------------------------------------- \\ 
         Final report}
-\author{Hans Mustermann}
-\date{ }
+\author{Marco Seravalli}
+\date{January 24th 2013}
 
 \newcommand{\tab}{\hspace{10mm}}
 \newcommand{\draft}[1]{\textcolor{NavyBlue}{#1}}
@@ -17,15 +17,9 @@
 \begin{document}
   \maketitle
 
-\hint{General information for you
-\begin{itemize}
-	\item the report should be between 8 and 12 pages long
-	\item it is the means to present and explain your work. The reader should receive a complete image of the solution you propose: both algorithms and  (relevant) implementation details.
-	\item this is a LaTeX template, but you can choose to work in any editing tool you like. The report has to be submitted in pdf format.
-	\item besides the points mentioned below, you are free to add any other ones which you might find relevant for your solution.
-\end{itemize}}
-
 \section{Introduction}
+ADD the first part.
+
 The purpose of the project was to parallelize a sequential CFD application. The
 whole process had been performed throughout four steps (milestones).
 
@@ -46,45 +40,67 @@ standards. In particular the objective was to reduce the communication overhead
 for a specific problem under the threshold of 25\%. 
 
 \section{Sequential optimization}
-\draft{Analysis of the measurements carried out for the first assignment. Include observations about the metrics variations for different input size as well as for different run phases of the same input.}
-
-\hint{Only include one or two tables and diagrams to support your statements. You do not need to include all the data you provided in the lab report, but analyze it and pick up the most relevant one.}
 
 \section{Benchmark parallelization}
-\draft{Following the milestones, present your solution for parallelizing this benchmark.
-\begin{itemize}
-	\item data distribution
-	\begin{itemize}
-		\item which initialization method you chose? why?
-		\item how did you implement the data distribution?
-		\item how did you avoid code replication when working with both metis and classical distribution?
-	\end{itemize}
-	\item communication model
-	\begin{itemize}
-		\item index mapping: how and what for?
-		\item ghost cells and communication lists
-	\end{itemize}
-	\item MPI implementation
-\end{itemize}
-}
-\hint{\begin{itemize}
-	\item you can refer to source code in your implementation (provide file name and line number).
-	\item you can provide pseudo-code for your algorithms, if you find it necessary.
-\end{itemize}}
+
+  \subsection*{Data distribution}
+  The data were distributed using different partitioned using different schemes.
+  In particular the classical distribution and two different distributions
+  offered by the Metis partitioning library.
+
+  For the classical distribution the partitioning was performed by splitting the
+  domain composed of $n$ cells equally among the computing units $np$ in a
+  sequential way, i.e. the first $ \frac{n}{np} $ cells are assigned to the
+  first processor.
+
+  For the two other distributions the whole array containing the cells is passed
+  to the library. For more information about how Metis partitions the domain
+  please refer to TODO.
+
+  The partitioning was firstly performed on a single processor, eventually in
+  order to decrease the communication among the computing units, this step was
+  computed in parallel by every single processor.
+
+  The different partitioning strategies are handled by two different functions
+  and for these the code duplication is reduced to the minimum the partitioning
+  functions only perform the strictly necessary tasks. The strategy was to try
+  to shift as mush as possible in the calling function.
+
+  \subsection*{Communication model}
+  For the communication model send and receive lists have been used in
+  particular it has been necessary to guarantee that the received data was
+  actually received at the correct position.
+
+  Once the communications lists were created the global to local index could be
+  created from those. The idea for this index was to first to see what elements
+  do belong to a specific processor and assign them an incremental number. Then
+  during a successive traversal the ghost cells had been incrementally numbered.
+  The reason for such numbering is mainly due to the successive phase the
+  building of the local to global index. In this index, we want to have the
+  inner elements at the beginning of the array and the ghost cells at the end.
+  Since the global to local index holds that specific structure it is
+  successively possible to initialize local_to_global (TODO: better formatting)
+  in a single traversal as it can be seen in the following algorithm.
+  TODO: show algo??
+
+  Eventually set the communication lists and lcc to local in order to be able to
+  operate with by applying only a minimum amount of changes in the original
+  code.
+
+  \subsection*{MPI implementation}
+  For the MPI implementation different aspects should be taken into account:
+  \begin{itemize}
+    \item Point to point operations
+    \item Asynchronous communication
+    \item Indexed data
+    \item Collective operations
+  \end{itemize}
 
 \section{Performance analysis and tuning}
-\draft{
-Present the scalability analysis of your code. Include relevant screenshots and diagrams/tables.}
-
-\draft{
-Mention any bottleneck identified in your code, whether it can be overcome and the new performance values achieved after optimizing your implementation (if that was possible).
-}
+To reduce the communication overhead, all the duplicates from the communication
+were deleted so that only the needed information was exchanged.
 
 \section{Overview}
-\draft{
-General conclusions regarding the implemented solution and other comments.
-}
-
 
 \end{document}
 
