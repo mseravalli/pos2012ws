@@ -18,28 +18,77 @@
   \maketitle
 
 \section{Introduction}
-ADD the first part.
+The Programming of Supercomputers laboratory is about understanding how already
+applications can be modified and optimized in order to be run efficiently and
+effectively on massively parallel machines.
 
-The purpose of the project was to parallelize a sequential CFD application. The
-whole process had been performed throughout four steps (milestones).
+The laboratory is divided into two main parts: the first one is about
+understanding how a sequential code can be optimized by acting on the input
+phase and on the compilation phase.
 
-In the first phase the domain had to be decomposed using different strategies,
-namely a classical one, metis-dual and metis-nodal. 
-MORE HERE.
-
-The second stage consisted in building the communication lists that had to be
-used for the computation part. In this phase also other positioning arrays had
-to be adapted for being able to respect the correctness in the communication.
-
-The third step involved the actual parallelization of the computational loop.
-The work
-
-The aim of the fourth and last part was the optimization of the code in order to
-be able to deliver a better performing application that satisfy some predefined
-standards. In particular the objective was to reduce the communication overhead
-for a specific problem under the threshold of 25\%. 
+The second part is instead more concerned about parallelizing a sequential
+Computational Fluid Dynamic application. This process is performed throughout 
+four steps (milestones).
+\begin{itemize}
+  \item In the first phase the domain has to be decomposed using different 
+        strategies. First of all a straightforward approach is adopted: here 
+        contiguous blocks of elements are assigned to a single processor without
+        taking the actual position into account. Afterwards also some advanced
+        partitioning algorithms provided by the \verb=metis= library are
+        introduced namely \verb=metis-dual= and \verb=metis-nodal=.
+  \item The second stage consists in building the communication lists that have 
+        to be used for the successive computation part. In this phase also other 
+        positioning arrays have to be adapted for being able to respect the 
+        correctness of the communication.
+  \item The third step involves the actual parallelization of the computational
+        loop. This requires to understand how the data within the loop should be
+        exchanged during the computation.
+  \item The aim of the fourth and last part is the optimization of the code in
+        order to be able to deliver a better performing application that
+        satisfies some predefined standards. The particular objective in this
+        case is to reduce the communication overhead for a specific problem 
+        under the threshold of 25\%. 
+\end{itemize}
 
 \section{Sequential optimization}
+The sequential optimization consists in applying different compiler flags to
+the code in order to see the effects produced by those in terms of speedup,
+cache hit improvements and floating point operations per second (flops).
+Then the optimizations are validated by running the application with different
+input files.
+In following graphs it is possible to see how the various compiler optimization
+affected the execution time (Figure \ref{fig:exec_time}) and the L2 cache miss 
+rate (Figure \ref{fig:cache_misses}).
+\begin{figure}[h]
+  \begin{centering}
+    \includegraphics[width=1\textwidth]{figures/exec_time.png}
+    \par\end{centering}
+  \caption{Execution time for each phase. \label{fig:exec_time}}
+\end{figure}
+
+\begin{figure}[h]
+  \begin{centering}
+    \includegraphics[width=1\textwidth]{figures/cache.png}
+    \par\end{centering}
+  \caption{L2 cache miss rate. \label{fig:cache_misses}}
+\end{figure}
+
+Furthermore, also the file reading phase is modified from text to binary. This 
+means that the input files are converted from ASCII values to a binary 
+representation.
+Also this change provides good speed enhancements to the file reading phase. 
+The improvement can be quantified in one order of one order of magnitude. In
+Figure \ref{fig:io} it can be seen the execution improvement and how the
+it is related to the size of the input file.
+\begin{figure}[h]
+  \begin{centering}
+    \includegraphics[width=1\textwidth]{figures/io.png}
+    \par\end{centering}
+  \caption{
+    Execution time of the input phase in relation to the input file size. 
+    \label{fig:io}
+  }
+\end{figure}
 
 \section{Benchmark parallelization}
 
@@ -104,13 +153,37 @@ for a specific problem under the threshold of 25\%.
           processors is handled by point to point operations. In such scenario
           every process sends the information only to another processor at a
           time.
-    \item Asynchronous communication: if blocking point to point communication 
+    \item Non blocking communication: if blocking point to point communication 
           is used, deadlocks might occur. The reason is that the some processes
-          need to send data before being able to receive information, if it
+          need to send data before being able to receive information, If it
           happens that all processes communicate will all processes (there is a
-          clique), no process is actually 
-    \item Indexed data
-    \item Collective operations
+          clique), it might occur the case that all processes are ready to
+          send, but none is ready to receive causing then a deadlock. This can
+          be avoided by using non blocking communication. The sending function
+          returns immediately even if the data are not actually send. Also for
+          the receiving non blocking communication can be exploited. In this
+          case the advantage would be that the incoming data from all processes
+          can be received in parallel. Eventually, before performing further
+          operations on the received and sent data there is the necessity of
+          waiting for the communication to be completed.
+    \item Indexed data: for sending data indexed data types are adopted. With
+          this data type model MPI sends only the necessary elements from the
+          correct position for each array. When receiving the data another
+          indexed data type should be used instead because the data has to be
+          received in the correct positions of the array. In the current
+          implementation, there are created send and receive data types for
+          every process with whom there is a communication. The building of
+          these indexes is performed by using the send and receive lists
+          previously created. 
+          TODO: put the algo
+    \item Collective operations: some of the variables of the serial
+          implementation are computed taking into account all elements of the
+          domain. Of course the parallel code needs to take into account this
+          computations and one of the most efficient ways to compute these
+          values is via collective operations. In particular for the given
+          implementation \verb=MPI_Allreduce=  was adopted. This
+          function allows to all the processes to share the result once it is
+          computed, hence afterwards no further communication is required.
   \end{itemize}
 
 \section{Performance analysis and tuning}
