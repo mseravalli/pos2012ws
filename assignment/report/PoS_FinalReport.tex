@@ -1,6 +1,7 @@
 \documentclass[12pt, a4paper]{article}
 \usepackage{a4wide}
 \usepackage{graphicx}
+\usepackage{float}
 \usepackage[usenames,dvipsnames]{color}
 
 \title{----------------------------------------------------------- \\
@@ -90,30 +91,33 @@ it is related to the size of the input file.
   }
 \end{figure}
 
+\clearpage
+
 \section{Benchmark parallelization}
 
   \subsection*{Data distribution}
-  The data were distributed using different partitioned using different schemes.
+  The data are distributed using different partitioning schemes.
   In particular the classical distribution and two different distributions
-  offered by the Metis partitioning library.
+  offered by the \verb=Metis= partitioning library.
 
-  For the classical distribution the partitioning was performed by splitting the
+  For the classical distribution the partitioning is performed by splitting the
   domain composed of $n$ cells equally among the computing units $np$ in a
   sequential way, i.e. the first $ \frac{n}{np} $ cells are assigned to the
-  first processor.
+  first process, then the second set of $ \frac{n}{np} $ sequential cells is
+  assigned to the second process and so forth.
 
   For the two other distributions the whole array containing the cells is passed
-  to the library. For more information about how Metis partitions the domain
-  please refer to TODO.
+  to the functions provided by the \verb=Metis= library. For more information 
+  about how the distribution is performed by these functions please refer to TODO.
 
   The partitioning was firstly performed on a single processor, eventually in
   order to decrease the communication among the computing units, this step was
   computed in parallel by every single processor.
 
   The different partitioning strategies are handled by two different functions
-  and for these the code duplication is reduced to the minimum the partitioning
-  functions only perform the strictly necessary tasks. The strategy was to try
-  to shift as mush as possible in the calling function.
+  and for these the code duplication is reduced to the minimum: the partitioning
+  functions only perform the strictly necessary tasks. In order to achieve this
+  result as mush code as possible is shifted in the calling function.
 
   \subsection*{Communication model}
   For the communication model send and receive lists have been used in
