@@ -10,6 +10,7 @@
 #include <math.h>
 #include "mpi.h"
 #include "metis.h"
+#include "scorep/SCOREP_User.h"
 
 #include "./initialization.h"
 #include "./compute_solution.h"

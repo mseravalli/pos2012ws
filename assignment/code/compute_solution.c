@@ -114,6 +114,9 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     MPI_Request* r_req = (MPI_Request*) calloc(size, sizeof(MPI_Request));
     // communication initialization end
 
+    SCOREP_USER_REGION_DEFINE(OA_Phase);
+    SCOREP_USER_OA_PHASE_BEGIN(OA_Phase,"OA_Phase", SCOREP_USER_REGION_TYPE_COMMON);
+
     // update the old values of direc
     for ( nc = nintci; nc <= nintcf; nc++ ) {
         direc1_curr[nc] = direc1_curr[nc] + resvec[nc] * cgup[nc];
@@ -124,10 +127,8 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         }
     }
 
-    SCOREP_USER_REGION_DEFINE(OA_Phase);
 
     while ( iter < max_iters ) {
-        SCOREP_USER_OA_PHASE_BEGIN(OA_Phase,"OA_Phase", SCOREP_USER_REGION_TYPE_COMMON)
 
         /**********  START COMP PHASE 1 **********/
 
@@ -298,7 +299,6 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         double* tmp = direc1_next;
         direc1_next = direc1_curr;
         direc1_curr = tmp;
-        SCOREP_USER_OA_PHASE_END(OA_Phase)
     }
 
     // communication start
@@ -318,6 +318,8 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         }
     }
     // communication end
+
+    SCOREP_USER_OA_PHASE_END(OA_Phase);
 
     free(resvec);
     free(direc1_curr);
