@@ -5,7 +5,7 @@
 \usepackage[usenames,dvipsnames]{color}
 
 \title{----------------------------------------------------------- \\
-        {\bf Programming of Supercomputers WS12/13}\\ 
+        {\bf Programming of Supercomputers WS 12/13}\\ 
         ----------------------------------------------------------- \\ 
         Final report}
 \author{Marco Seravalli}
@@ -190,9 +190,47 @@ it is related to the size of the input file.
           computed, hence afterwards no further communication is required.
   \end{itemize}
 
+\clearpage
+
 \section{Performance analysis and tuning}
+For this last phase first of all an optimization aim is set, then the code is
+analysed using different profiling tools and after the analysis some
+modifications are performed in order to reach the predefined objective.
+
+\subsection*{Performance aims}
+The major objective of the performance is to reduce the communication overhead
+under 25\% for the whole application. 
+
+\subsection*{Profiling}
+The code is analysed using different tools, namely the ScoreP framework in 
+collaboration with the PAPI library and the Periscope tool.
+
+TODO: Explain what the different tools do.
+
+The outcome of the first analysis is that there is particularly high
+communication overhead in the initialization part. This is 
+
+The computational loop presents some overhead only in the \verb=Allreduce= MPI
+function. Small overhead was due to the communication functions \verb=send= and
+\verb=recv= because asynchronous communication was adopted since the beginning.
+
+The finalization phase does not present a
+
+\subsection*{Optimization}
+The communication overhead in the first part is due to the fact that the
+partitioning is performed on a single core and then distributed to the others
+
 To reduce the communication overhead, all the duplicates from the communication
 were deleted so that only the needed information was exchanged.
+
+Furthermore in order to be able to overlap communication and computation the
+sending and the receiving of data was modified after the initial implementation.
+In the first approach the data was communicated at the beginning of the
+computational cycle using \verb=IRecv= and \verb=ISend= in that order. However
+in order to be able to perform computation while communicating, computation and
+the sending of \verb=direc1= was moved after the computation of \verb=resvec=.
+This required to rearrange also the first send and the last receive statement as
+it can be seen in figure TODO.
 
 \section{Overview}
 
