@@ -7,8 +7,8 @@
 PREP = scorep --user
 
 CC = $(PREP) mpicc
-CFLAGS = -Wall -g -std=c99 $(METIS_INC)
-LIBS = $(METIS_LIB) -lmetis -lm 
+CFLAGS = $(METIS_INC) $(PAPI_INC) -Wall -O3 -std=c99 
+LIBS =   $(METIS_LIB) $(PAPI_LIB) -lmetis -lm 
 
 LIBPOS=libpos.a
 AR = ar
@@ -23,7 +23,7 @@ all: gccg
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 gccg: gccg.c $(LIBPOS)
-	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
 $(LIBPOS) : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $+

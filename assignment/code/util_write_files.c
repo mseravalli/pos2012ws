@@ -53,15 +53,15 @@ int store_simulation_stats(char *in_file_name, char *out_file_name, int nintci, 
         return -1;
     }
 
-    printf("========================================\n");
-    printf("= AVL -  Linear Equation Solver - GCCG =\n");
-    printf("========================================\n\n");
-    printf("Input File:  %s\n", in_file_name);
-    printf("Output File:  %s\n", out_file_name);
-    printf("No. of Active Cells:  %d\n", nintcf);
-    printf("Iterations Count: %d\n", total_iters);
-    printf("Residual Ratio: %e\n", residual_ratio);
-    printf("========================================\n\n");
+//  printf("========================================\n");
+//  printf("= AVL -  Linear Equation Solver - GCCG =\n");
+//  printf("========================================\n\n");
+//  printf("Input File:  %s\n", in_file_name);
+//  printf("Output File:  %s\n", out_file_name);
+//  printf("No. of Active Cells:  %d\n", nintcf);
+//  printf("Iterations Count: %d\n", total_iters);
+//  printf("Residual Ratio: %e\n", residual_ratio);
+//  printf("========================================\n\n");
 
     fprintf(fp, "========================================\n");
     fprintf(fp, "= AVL -  Linear Equation Solver - GCCG =\n");

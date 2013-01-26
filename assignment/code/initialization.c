@@ -11,9 +11,14 @@
 #include <string.h>
 #include "mpi.h"
 
-#include "util_read_files.h"
-#include "initialization.h"
+#include "./util_read_files.h"
+#include "./initialization.h"
 
+/**
+ * Partitions the domain using Metis library.
+ * The method is able to perform two types of partitions, dual an nodal,
+ * those can be decided by passing the correct partitioning type.
+ */
 int metis_partition(char* part_type,
               int el_int_glob, int points_count,
               int* elems,
@@ -69,6 +74,9 @@ int metis_partition(char* part_type,
     return result;
 }
 
+/**
+ * Splits the domain in equally in sequential chuncks.
+ */
 int classical_partition(char* part_type,
                         int el_int_glob, int points_count,
                         int* elems,
@@ -89,6 +97,9 @@ int classical_partition(char* part_type,
     return result;
 }
 
+/**
+ * Performs the partition using the desired technique.
+ */
 int partition(char* file_in, char* part_type,
               int* nintci, int* nintcf, int* nextci, int* nextcf,
               int*** lcc,
@@ -119,7 +130,7 @@ int partition(char* file_in, char* part_type,
     *epart = malloc((*el_int_glob) * sizeof(idx_t));
     *npart = malloc((*points_count) * sizeof(idx_t));
 
-    if (size > 1 && 
+    if (size > 1 &&
         (strcmp(part_type, "dual") == 0 || strcmp(part_type, "nodal") == 0)) {
         part_result = metis_partition(part_type,
                                      *el_int_glob, *points_count,
@@ -150,18 +161,22 @@ int partition(char* file_in, char* part_type,
     return part_result;
 }
 
+/**
+ * Initalizes the globa to local index from the send and recv lists.
+ */
 int build_global_local(int el_int_glob, int* part_elems,
                        int* recv_count, int** recv_list,
                        int* el_int_loc,
                        int* el_ext_loc,
                        int** global_local) {
     *global_local = (int*) calloc(el_int_glob, sizeof(int));
-    
+
     int my_rank = -1;
     int size = -1;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    // set only the internal elements to an increasing value all the rest to -1
     int count = 0;
     for (int i = 0; i < el_int_glob; ++i) {
         if (part_elems[i] == my_rank) {
@@ -171,9 +186,10 @@ int build_global_local(int el_int_glob, int* part_elems,
             (*global_local)[i] = -1;
         }
     }
-    
+
     *el_int_loc = count;
 
+    // set also the ghost cells with increasing values
     for (int i = 0; i < size; ++i) {
         for (int j = 0; j < recv_count[i]; ++j) {
             if ((*global_local)[recv_list[i][j]] == -1) {
@@ -183,11 +199,14 @@ int build_global_local(int el_int_glob, int* part_elems,
         }
     }
 
-    *el_ext_loc = count - *el_int_loc; 
+    *el_ext_loc = count - *el_int_loc;
 
     return 0;
 }
 
+/**
+ * Initalizes local to global index using global to local
+ */
 int build_local_global(int el_int_glob, int* global_local, int** local_global) {
     int count = 0;
     for (int i = 0; i < el_int_glob; ++i) {
@@ -209,6 +228,9 @@ int compare(const void * a, const void * b) {
     return ( *(int*)a - *(int*)b );
 }
 
+/**
+ * Removes duplicates from the given array.
+ */
 int remove_duplicates(int** array, int num, int* new_num) {
     qsort(*array, num, sizeof(int), compare);
 
@@ -237,7 +259,7 @@ int remove_duplicates(int** array, int num, int* new_num) {
             ++dupl;
             last = (*array)[i];
             tmp[dupl] = last;
-        } 
+        }
     }
 
     free(*array);
@@ -325,7 +347,7 @@ int init_commlist(int el_int_glob, int* part_elems, int** lcc,  // i,i,i
     }
 
     // initalize the lists
-    // the recv list will have to look like the send list of the sending proc 
+    // the recv list will have to look like the send list of the sending proc
     for (int r = 0; r < size; ++r) {
         for (int i = 0; i < el_int_glob; ++i) {
             if (part_elems[i] == my_rank && r == my_rank) {
@@ -339,7 +361,7 @@ int init_commlist(int el_int_glob, int* part_elems, int** lcc,  // i,i,i
                         }
                     }
                 }
-            } else if (part_elems[i] == r && r != my_rank){
+            } else if (part_elems[i] == r && r != my_rank) {
                 for (int j = 0; j < 6; ++j) {
                     int l = lcc[i][j];
                     if (l < el_int_glob) {
@@ -360,12 +382,12 @@ int init_commlist(int el_int_glob, int* part_elems, int** lcc,  // i,i,i
     // remove duplicates
         for (int i = 0; i < size; ++i) {
         if ((*send_count)[i] > 0) {
-            remove_duplicates(&((*send_list)[i]), 
-                              (*send_count)[i], 
+            remove_duplicates(&((*send_list)[i]),
+                              (*send_count)[i],
                               &((*send_count)[i]));
         }
         if ((*recv_count)[i] > 0) {
-            remove_duplicates(&((*recv_list)[i]), 
+            remove_duplicates(&((*recv_list)[i]),
                               (*recv_count)[i],
                               &((*recv_count)[i]));
         }
@@ -378,9 +400,9 @@ int init_commlist(int el_int_glob, int* part_elems, int** lcc,  // i,i,i
  * The last element is 0, this correspond to the external cells, lcc will take
  * this into account 
  */
-int distr_shrink(int* local_global, 
-                 int el_int_loc, 
-                 int el_ext_loc, 
+int distr_shrink(int* local_global,
+                 int el_int_loc,
+                 int el_ext_loc,
                  double** array) {
     int result = 0;
 
@@ -433,15 +455,15 @@ int initialization(char* file_in, char* part_type,
                   neighbors_count,
                   send_count, send_list,
                   recv_count, recv_list);
-    
+
     build_global_local(el_int_glob, part_elems,
                        *recv_count, *recv_list,
                        &el_int_loc,
                        &el_ext_loc,
                        global_local_index);
-  
+
     build_local_global(el_int_glob, *global_local_index, local_global_index);
-    
+
     // local values for lcc
     int** tmp_lcc;
     tmp_lcc  = (int**) malloc(el_int_glob * sizeof(int*));
@@ -465,7 +487,7 @@ int initialization(char* file_in, char* part_type,
     **lcc = tmp_lcc[0];
 
     // local values for send and recv list
-    for (int i = 0; i < size; ++i) { 
+    for (int i = 0; i < size; ++i) {
         for (int j = 0; j < (*send_count)[i]; ++j) {
             (*send_list)[i][j] = (*global_local_index)[(*send_list)[i][j]];
         }
