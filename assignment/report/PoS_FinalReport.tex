@@ -218,10 +218,13 @@ The finalization phase does not present a
 
 \subsection*{Optimization}
 The communication overhead in the first part is due to the fact that the
-partitioning is performed on a single core and then distributed to the others
+partitioning is performed on a process and then distributed to the others, a
+possible way to overcome this issue is to compute directly the partitioning on
+all the nodes in order to minimize communication. The overall performance is not
+affected.
 
 To reduce the communication overhead, all the duplicates from the communication
-were deleted so that only the needed information was exchanged.
+lists are deleted so that only the needed information was exchanged.
 
 Furthermore in order to be able to overlap communication and computation the
 sending and the receiving of data was modified after the initial implementation.
@@ -232,7 +235,19 @@ the sending of \verb=direc1= was moved after the computation of \verb=resvec=.
 This required to rearrange also the first send and the last receive statement as
 it can be seen in figure TODO.
 
+Unfortunately, the improvements yield by the optimization step are not directly
+visible. One of the possible causes could be the fact that also the reference
+code contains asynchronous communication and the optimisations performed to not
+lead to significant changes in the adopted concepts.
+
+\subsection*{Scaling results}
+
+
 \section{Overview}
+The lab course proposed an opportunity to approach the parallelization of some
+provided code. During the different phases several unexpected challenges had to
+be solved. In particular, a careful planning of the data structures and the
+communication had been necessary to be able to reach a working solution.
 
 \end{document}
 
