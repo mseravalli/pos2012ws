@@ -2,6 +2,8 @@
 \usepackage{a4wide}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{hyperref}
+\usepackage{listings}
 \usepackage[usenames,dvipsnames]{color}
 
 \title{----------------------------------------------------------- \\
@@ -50,6 +52,8 @@ four steps (milestones).
         case is to reduce the communication overhead for a specific problem 
         under the threshold of 25\%. 
 \end{itemize}
+
+\clearpage
 
 \section{Sequential optimization}
 The sequential optimization consists in applying different compiler flags to
@@ -108,7 +112,8 @@ it is related to the size of the input file.
 
   For the two other distributions the whole array containing the cells is passed
   to the functions provided by the \verb=Metis= library. For more information 
-  about how the distribution is performed by these functions please refer to TODO.
+  about how the distribution is performed by these functions please refer to
+  \href{http://glaros.dtc.umn.edu/gkhome/metis/metis/overview}{Metis Homepage}.
 
   The partitioning was firstly performed on a single processor, eventually in
   order to decrease the communication among the computing units, this step was
@@ -130,13 +135,45 @@ it is related to the size of the input file.
   created from those. The idea for this index is to first to see what elements
   do belong to a specific processor and assign them an incremental number. Then
   during a successive traversal the ghost cells have incrementally numbered.
+  The actual implementation can be seen in the following code.
+
+  \begin{verbatim}
+// initialise global_local  
+int count = 0;
+for (int i = 0; i < el_int_glob; ++i) {
+    if (part_elems[i] == my_rank) {
+        (*global_local)[i] = count;
+        ++count;
+    } else {
+        (*global_local)[i] = -1;
+    }
+}
+
+for (int i = 0; i < size; ++i) {
+    for (int j = 0; j < recv_count[i]; ++j) {
+        if ((*global_local)[recv_list[i][j]] == -1) {
+            (*global_local)[recv_list[i][j]] = count;
+            ++count;
+        }
+    }
+}
+  \end{verbatim}
+
   The reason for such numbering is mainly due to the successive phase the
   building of the local to global index. In this index, we want to have the
   inner elements at the beginning of the array and the ghost cells at the end.
   Since the global to local index holds that specific structure it is
-  successively possible to initialize local to global (TODO: better formatting)
-  in a single traversal as it can be seen in the following algorithm.
-  TODO: show algo??
+  successively possible to initialize \verb=local_global=  in a single 
+  traversal as it can be seen in the following code snippet.
+
+  \begin{verbatim}
+// after the initialization of global_local we build up local_global
+for (int i = 0; i < el_int_glob; ++i) {
+    if (global_local[i] != -1) {
+        (*local_global)[global_local[i]] = i;
+    }
+}
+  \end{verbatim}
 
   After having the indexes set it is also possible to modify the communication 
   lists and the lcc array in order to have the local indexes of the elements. 
@@ -148,7 +185,18 @@ it is related to the size of the input file.
   is performed by making the coefficient arrays one element longer and storing a
   this additional information in the last cell. Of course also lcc needs to be
   modified accordingly, such that all the external cells point to the very same
-  position in the coefficient arrays.
+  position in the coefficient arrays. This change yields to the final form of
+  the \verb=local_global_index= that can be seen in Figure \ref{fig:array}.
+  \begin{figure}[h]
+    \begin{centering}
+      \includegraphics[width=1\textwidth]{figures/array.png}
+      \par\end{centering}
+    \caption{
+      How elements are stored within the local to global index. 
+      \label{fig:array}
+    }
+  \end{figure}
+
 
   \subsection*{MPI implementation}
   For the MPI implementation different aspects should be taken into account:
@@ -179,7 +227,36 @@ it is related to the size of the input file.
           every process with whom there is a communication. The building of
           these indexes is performed by using the send and receive lists
           previously created. 
-          TODO: put the algo
+          \begin{verbatim}
+for (int i = 0; i < size; ++i) {
+    if (send_count[i] > 0) {
+        block_len = (int*) calloc(send_count[i], sizeof(int));
+        for (int j = 0; j < send_count[i]; ++j) {
+            block_len[j] = 1;
+        }
+        MPI_Type_indexed(send_count[i], 
+                         block_len, 
+                         send_list[i], 
+                         MPI_DOUBLE,
+                         &(send_types[i]));
+        MPI_Type_commit(&(send_types[i]));
+        free(block_len);
+    }
+    if (recv_count[i] > 0) {
+        block_len = (int*) calloc(recv_count[i], sizeof(int));
+        for (int j = 0; j < recv_count[i]; ++j) {
+            block_len[j] = 1;
+        }
+        MPI_Type_indexed(recv_count[i],
+                         block_len,
+                         recv_list[i],
+                         MPI_DOUBLE,
+                         &(recv_types[i]));
+        MPI_Type_commit(&(recv_types[i]));
+        free(block_len);
+    }
+}
+          \end{verbatim}
     \item Collective operations: some of the variables of the serial
           implementation are computed taking into account all elements of the
           domain. Of course the parallel code needs to take into account this
@@ -202,26 +279,32 @@ The major objective of the performance is to reduce the communication overhead
 under 25\% for the whole application. 
 
 \subsection*{Profiling}
-The code is analysed using different tools, namely the ScoreP framework in 
+The code is analyzed using different tools, namely the ScoreP framework in 
 collaboration with the PAPI library and the Periscope tool.
-
-TODO: Explain what the different tools do.
+ScoreP in particular was used for instrumenting the code and then manually
+inspect the outcome through Cube, a visualization tool that allows to scan the
+different dimensions of the profiling result.
+Periscope was instead employed to automatically find bottlenecks and hot-spots
+of the application.
 
 The outcome of the first analysis is that there is particularly high
-communication overhead in the initialization part. This is 
+communication overhead in the initialization part. This is due to the fact that
+the partitioning is performed on a process and then distributed to the others.
 
 The computational loop presents some overhead only in the \verb=Allreduce= MPI
-function. Small overhead was due to the communication functions \verb=send= and
-\verb=recv= because asynchronous communication was adopted since the beginning.
+function. Small overhead is due to the communication functions \verb=send= and
+\verb=recv= because asynchronous communication is adopted since the first
+parallelization.
 
-The finalization phase does not present a
+The finalization phase does not present a great overhead because all the data
+are communicated only once and the largest amount of time is spent in writing
+information on the disk.
 
 \subsection*{Optimization}
-The communication overhead in the first part is due to the fact that the
-partitioning is performed on a process and then distributed to the others, a
-possible way to overcome this issue is to compute directly the partitioning on
-all the nodes in order to minimize communication. The overall performance is not
-affected.
+The communication overhead in the first part could be overcome by computing 
+directly the partitioning on all processes in order to minimize communication. 
+Even though in this case more computations are performed, the overall
+performance is not affected.
 
 To reduce the communication overhead, all the duplicates from the communication
 lists are deleted so that only the needed information was exchanged.
@@ -229,11 +312,42 @@ lists are deleted so that only the needed information was exchanged.
 Furthermore in order to be able to overlap communication and computation the
 sending and the receiving of data was modified after the initial implementation.
 In the first approach the data was communicated at the beginning of the
-computational cycle using \verb=IRecv= and \verb=ISend= in that order. However
-in order to be able to perform computation while communicating, computation and
-the sending of \verb=direc1= was moved after the computation of \verb=resvec=.
+computational cycle using \verb=IRecv= and \verb=ISend= in that order.
+
+\begin{verbatim}
+while ( iter < max_iters ) {
+    update the old direc1 values
+    receive direc1 values
+    send direc1 values
+    ...
+
+    update resvec
+    ...
+}
+\end{verbatim}
+
+However in order to be able to perform computation while communicating, 
+computation and the sending of \verb=direc1= was moved after the computation of
+\verb=resvec=.
 This required to rearrange also the first send and the last receive statement as
-it can be seen in figure TODO.
+it can be seen in the following pseudo code.
+
+\begin{verbatim}
+update the old direc1 values
+send direc1 values
+
+while ( iter < max_iters ) {
+    receive direc1 values
+    ...
+
+    update resvec
+    update the old direc1 values
+    send direc1 values
+    ...
+}
+
+receive direc1 values
+\end{verbatim}
 
 Unfortunately, the improvements yield by the optimization step are not directly
 visible. One of the possible causes could be the fact that also the reference
