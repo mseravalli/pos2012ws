@@ -11,6 +11,7 @@
 #include "mpi.h"
 #include "metis.h"
 #include "scorep/SCOREP_User.h"
+#include <papi.h>
 
 #include "./initialization.h"
 #include "./compute_solution.h"
@@ -41,6 +42,8 @@ int main(int argc, char *argv[]) {
 
     /** Additional vectors required for the computation */
     double *cgup = NULL, *oc = NULL, *cnorm = NULL;
+
+    long_long start_usec, end_usec;
 
     /** Geometry data */
     int points_count;  /// total number of points that define the geometry
@@ -85,6 +88,7 @@ int main(int argc, char *argv[]) {
 
     /********** START INITIALIZATION **********/
     // read-in the input file
+    start_usec = PAPI_get_real_usec();
     int init_status = initialization(file_in, part_type, &nintci, &nintcf,
                                      &nextci, &nextcf, &lcc,
                                      &bs, &be, &bn, &bw, &bl, &bh, &bp, &su,
@@ -95,6 +99,8 @@ int main(int argc, char *argv[]) {
                                      &send_count, &send_list,
                                      &recv_count, &recv_list,
                                      &epart, &npart, &objval);
+    end_usec = PAPI_get_real_usec();
+    printf("%lld\n", end_usec - start_usec);
 
     if ( init_status != 0 ) {
         fprintf(stderr, "Failed to initialize data!\n");
@@ -104,20 +110,21 @@ int main(int argc, char *argv[]) {
     char file_vtk_out[256];
     sprintf(file_vtk_out, "%s_%s_proc%d.vtk", out_prefix, part_type, my_rank);
 
-    if (my_rank == 1) {
-        // Implement this function in test_functions.c and call it here
+//  if (my_rank == 3) {
+//      // Implement this function in test_functions.c and call it here
 //      test_distribution(file_in, file_vtk_out, local_global_index,
 //                        nintcf, cgup);
-        // Implement this function in test_functions.c and call it here
-        test_communication(file_in, file_vtk_out, local_global_index,
-                           &nintcf, neighbors_count,
-                           send_count, send_list, recv_count, recv_list);
-    }
+//      // Implement this function in test_functions.c and call it here
+//      test_communication(file_in, file_vtk_out, local_global_index,
+//                         &nintcf, neighbors_count,
+//                         send_count, send_list, recv_count, recv_list);
+//  }
 
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
     int total_iters = 0;
+    start_usec = PAPI_get_real_usec();
     total_iters = compute_solution(max_iters, nintci, nintcf, nextcf,
                                    lcc, bp, bs, bw, bl, bn, be, bh,
                                    cnorm, var, su, cgup, &residual_ratio,
@@ -125,13 +132,18 @@ int main(int argc, char *argv[]) {
                                    neighbors_count,
                                    send_count, send_list,
                                    recv_count, recv_list);
+    end_usec = PAPI_get_real_usec();
+    printf("%lld\n", end_usec - start_usec);
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/
+    start_usec = PAPI_get_real_usec();
     finalization(file_in, out_prefix,
                  total_iters, residual_ratio, nintci, nintcf,
                  points_count, points, elems,
                  var, cgup, su, local_global_index);
+    end_usec = PAPI_get_real_usec();
+    printf("%lld\n", end_usec - start_usec);
     /********** END FINALIZATION **********/
 
     free(cnorm);

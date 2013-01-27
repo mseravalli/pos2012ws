@@ -12,15 +12,15 @@
 #include "scorep/SCOREP_User.h"
 
 
-#include "compute_solution.h"
+#include "./compute_solution.h"
 
 int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
                      int** lcc, double* bp, double* bs, double* bw, double* bl,
-                     double* bn, double* be, double* bh, double* cnorm, 
-                     double* var, double *su, double* cgup, 
-                     double* residual_ratio, int* local_global_index, 
+                     double* bn, double* be, double* bh, double* cnorm,
+                     double* var, double *su, double* cgup,
+                     double* residual_ratio, int* local_global_index,
                      int* global_local_index, int neighbors_count,
-                     int* send_count, int** send_list, 
+                     int* send_count, int** send_list,
                      int* recv_count, int** recv_list) {
     --nintcf;
 
@@ -78,7 +78,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     int* block_len = NULL;
     MPI_Datatype* send_types =
         (MPI_Datatype*) calloc(size, sizeof(MPI_Datatype));
-    MPI_Datatype* recv_types = 
+    MPI_Datatype* recv_types =
         (MPI_Datatype*) calloc(size, sizeof(MPI_Datatype));
     for (int i = 0; i < size; ++i) {
         if (send_count[i] > 0) {
@@ -86,9 +86,9 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
             for (int j = 0; j < send_count[i]; ++j) {
                 block_len[j] = 1;
             }
-            MPI_Type_indexed(send_count[i], 
-                             block_len, 
-                             send_list[i], 
+            MPI_Type_indexed(send_count[i],
+                             block_len,
+                             send_list[i],
                              MPI_DOUBLE,
                              &(send_types[i]));
             MPI_Type_commit(&(send_types[i]));
@@ -115,7 +115,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
     // communication initialization end
 
     SCOREP_USER_REGION_DEFINE(OA_Phase);
-    SCOREP_USER_OA_PHASE_BEGIN(OA_Phase,"OA_Phase", SCOREP_USER_REGION_TYPE_COMMON);
+    SCOREP_USER_OA_PHASE_BEGIN(OA_Phase, "OA_Phase", SCOREP_USER_REGION_TYPE_COMMON);
 
     // update the old values of direc
     for ( nc = nintci; nc <= nintcf; nc++ ) {
@@ -127,12 +127,10 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         }
     }
 
-
     while ( iter < max_iters ) {
-
         /**********  START COMP PHASE 1 **********/
 
-        // communication start
+        // start receiving
         for (int i = 0; i < size; ++i) {
             if (recv_count[i] > 0) {
                 MPI_Irecv(direc1_curr, 1, recv_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(r_req[i]));
@@ -148,8 +146,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
                 MPI_Wait(&(r_req[i]), &status);
             }
         }
-        // communication end
-
+        // end receiving
 
         // compute new guess (approximation) for direc
         for ( nc = nintci; nc <= nintcf; nc++ ) {
@@ -174,13 +171,13 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
             for ( nc = nintci; nc <= nintcf; nc++ ) {
                 occ = occ + adxor1[nc] * direc2[nc];
             }
-        
+
             // communicate the global occ
             MPI_Allreduce(&occ,
-                          &global_occ, 
-                          1, 
-                          MPI_DOUBLE, 
-                          MPI_SUM, 
+                          &global_occ,
+                          1,
+                          MPI_DOUBLE,
+                          MPI_SUM,
                           MPI_COMM_WORLD);
             occ = global_occ;
             oc1 = occ / cnorm[1];
@@ -301,7 +298,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
         direc1_curr = tmp;
     }
 
-    // communication start
+    // start receiving
     for (int i = 0; i < size; ++i) {
         if (recv_count[i] > 0) {
             MPI_Irecv(direc1_curr, 1, recv_types[i], i, TAG_DIR1, MPI_COMM_WORLD, &(r_req[i]));
@@ -317,7 +314,7 @@ int compute_solution(const int max_iters, int nintci, int nintcf, int nextcf,
             MPI_Wait(&(r_req[i]), &status);
         }
     }
-    // communication end
+    // end receiving
 
     SCOREP_USER_OA_PHASE_END(OA_Phase);
 
