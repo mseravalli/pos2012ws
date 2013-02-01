@@ -685,7 +685,7 @@ Global to local index
 \end_layout
 
 \begin_layout Itemize
-Local to global
+Local to global index
 \end_layout
 
 \begin_layout Itemize
@@ -823,7 +823,7 @@ Times in
 \begin_inset Formula $\mu sec$
 \end_inset
 
- of the single parts of Cojack input run on multiple processesusing the
+ of the single parts of Cojack input run on multiple processes using the
  dual partitioning algorithm.
 \end_layout
 
@@ -863,7 +863,7 @@ status open
 
 \begin_layout Plain Layout
 Scaling for computational loop for Cojack input run on multiple processes
- usingthe dual partitioning algorithm
+ using the dual partitioning algorithm
 \end_layout
 
 \end_inset
